@@ -20,7 +20,6 @@ import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -175,9 +174,8 @@ public class OcdsValidatorService {
         //reading meta
         try {
             logger.debug("Reading extension metadata for extension " + extensionName);
-            return JsonLoader.fromResource(OcdsValidatorConstants.EXTENSIONS_PREFIX + extensionName + File
-                    .separator + OcdsValidatorConstants
-                    .EXTENSION_META);
+            return JsonLoader.fromResource(OcdsValidatorConstants.EXTENSIONS_PREFIX + extensionName + "/"
+                    + OcdsValidatorConstants.EXTENSION_META);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -210,8 +208,7 @@ public class OcdsValidatorService {
         try {
             logger.debug("Reading extension JSON contents for extension " + extensionName);
             JsonNode jsonMergePatch = JsonLoader.fromResource(OcdsValidatorConstants.EXTENSIONS_PREFIX
-                    + extensionName + File.separator + OcdsValidatorConstants
-                    .EXTENSION_RELEASE_JSON);
+                    + extensionName + "/" + OcdsValidatorConstants.EXTENSION_RELEASE_JSON);
             JsonMergePatch patch = JsonMergePatch.fromJson(jsonMergePatch);
             return patch;
         } catch (IOException | JsonPatchException e) {

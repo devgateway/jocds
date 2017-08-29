@@ -28,7 +28,7 @@ jOCDS is a Java implementation of an OCDS Validator tool.
 Key features:
 - one single file, java based
 - can be started as a web server and use as a JSON REST API service to validate
-incoming json data (see validator-web project).
+incoming json data (see jocds-web project).
 - can be started from the command line and used as a command tool to validate OCDS
 files and URLs.
 - works in offline mode with all OCDS versions including the minor and patch versions.

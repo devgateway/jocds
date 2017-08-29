@@ -26,9 +26,9 @@
     </properties>
 
     <modules>
-        <module>validator</module>
-        <module>validator-web</module>
-        <module>validator-cli</module>
+        <module>jocds-core</module>
+        <module>jocds-web</module>
+        <module>jocds-cli</module>
     </modules>
 
     <inceptionYear>2017</inceptionYear>

@@ -51,7 +51,7 @@
         <repository>
             <id>bintray-devgateway-jocds</id>
             <name>devgateway-jocds</name>
-            <url>https://api.bintray.com/maven/devgateway/jocds/;publish=1</url>
+            <url>https://api.bintray.com/maven/devgateway/jocds/jocds/;publish=1</url>
         </repository>
     </distributionManagement>
 

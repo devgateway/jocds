@@ -38,13 +38,13 @@
     </organization>
 
     <scm>
-        <url>git@github.com:devgateway/oc-explorer.git</url>
+        <url>git@github.com:devgateway/jocds.git</url>
         <developerConnection>
-            scm:git:git@github.com:devgateway/oc-explorer.git
+            scm:git:git@github.com:devgateway/jocds.git
         </developerConnection>
-        <connection>git@github.com:devgateway/oc-explorer.git
+        <connection>git@github.com:devgateway/jocds.git
         </connection>
-        <tag>0.0.3-SNAPSHOT</tag>
+        <tag>0.1.0-SNAPSHOT</tag>
     </scm>
 
     <distributionManagement>

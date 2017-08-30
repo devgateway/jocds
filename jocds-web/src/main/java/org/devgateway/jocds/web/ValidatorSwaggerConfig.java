@@ -24,11 +24,11 @@ public class ValidatorSwaggerConfig {
 
     @Bean
     public Docket validatorApi() {
-        return new Docket(DocumentationType.SWAGGER_2).groupName("validator")
+        return new Docket(DocumentationType.SWAGGER_2).groupName("jocds").apiInfo(validatorApiInfo())
                 .select().apis(RequestHandlerSelectors.any()).paths(regex("/api/.*")).build();
     }
 
-    private ApiInfo ocDashboardsApiInfo() {
+    private ApiInfo validatorApiInfo() {
         return new ApiInfoBuilder().title("jOCDS - The Open Contracting Data Standard (OCDS) Java Validator")
                 .description("Validates OCDS json resources, resource packages, URLs, with or without extensions")
                 .license("MIT License")

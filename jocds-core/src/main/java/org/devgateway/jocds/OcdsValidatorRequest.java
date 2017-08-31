@@ -14,7 +14,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 /**
  * Created by mpostelnicu on 7/5/17.
  */
-public abstract class OcdsValidatorRequest {
+public class OcdsValidatorRequest {
 
     public OcdsValidatorRequest() {
 
@@ -70,6 +70,8 @@ public abstract class OcdsValidatorRequest {
     @NotEmpty(message = "Please provide schemaType!")
     @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
             + "and release-package")
+    @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
+            + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)
     private String schemaType;
 
     public String getVersion() {

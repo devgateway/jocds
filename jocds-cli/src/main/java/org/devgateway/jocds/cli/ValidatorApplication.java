@@ -5,7 +5,7 @@
 
 package org.devgateway.jocds.cli;
 
-import org.springframework.boot.Banner;
+import java.util.Properties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
@@ -20,7 +20,10 @@ import org.springframework.context.annotation.PropertySource;
 public class ValidatorApplication {
     public static void main(final String[] args) {
         SpringApplication app = new SpringApplication(ValidatorApplication.class);
-        app.setBannerMode(Banner.Mode.OFF);
+        app.setLogStartupInfo(false);
+        Properties properties = new Properties();
+        properties.setProperty("logging.level.root", "WARN");
+        app.setDefaultProperties(properties);
         app.run(args);
     }
 }

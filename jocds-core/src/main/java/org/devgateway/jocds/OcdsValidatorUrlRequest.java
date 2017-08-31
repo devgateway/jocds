@@ -21,4 +21,9 @@ public class OcdsValidatorUrlRequest extends OcdsValidatorRequest {
     public void setUrl(String url) {
         this.url = url;
     }
+
+    public OcdsValidatorUrlRequest(OcdsValidatorRequest request, String url) {
+        super(request);
+        this.url = url;
+    }
 }

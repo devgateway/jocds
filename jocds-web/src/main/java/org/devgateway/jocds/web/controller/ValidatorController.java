@@ -6,15 +6,10 @@
 package org.devgateway.jocds.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import com.github.fge.jsonschema.core.report.ListProcessingReport;
-import com.github.fge.jsonschema.core.report.ProcessingReport;
 import io.swagger.annotations.ApiOperation;
 import java.io.IOException;
 import javax.validation.Valid;
-import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorNodeRequest;
-import org.devgateway.jocds.OcdsValidatorRequest;
 import org.devgateway.jocds.OcdsValidatorService;
 import org.devgateway.jocds.OcdsValidatorStringRequest;
 import org.devgateway.jocds.OcdsValidatorUrlRequest;
@@ -43,7 +38,8 @@ public class ValidatorController {
             consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<JsonNode> validateFormInline(@Valid @ModelAttribute OcdsValidatorStringRequest request)
             throws IOException {
-        return new ResponseEntity<JsonNode>(processingReportToJsonNode(ocdsValidatorService.validate(request), request),
+        return new ResponseEntity<JsonNode>(ocdsValidatorService.
+                processingReportToJsonNode(ocdsValidatorService.validate(request), request),
                 HttpStatus.OK);
     }
 
@@ -54,7 +50,7 @@ public class ValidatorController {
     public ResponseEntity<JsonNode> validateJsonInline(@RequestBody @Valid
                                                                OcdsValidatorNodeRequest request)
             throws IOException {
-        return new ResponseEntity<JsonNode>(processingReportToJsonNode(
+        return new ResponseEntity<JsonNode>(ocdsValidatorService.processingReportToJsonNode(
                 ocdsValidatorService.validate(request), request), HttpStatus.OK);
     }
 
@@ -65,18 +61,10 @@ public class ValidatorController {
     public ResponseEntity<JsonNode> validateJsonUrl(@RequestBody @Valid
                                                             OcdsValidatorUrlRequest request)
             throws IOException {
-        return new ResponseEntity<JsonNode>(processingReportToJsonNode(
+        return new ResponseEntity<JsonNode>(ocdsValidatorService.processingReportToJsonNode(
                 ocdsValidatorService.validate(request), request), HttpStatus.OK);
     }
 
 
-    private JsonNode processingReportToJsonNode(ProcessingReport report, OcdsValidatorRequest request) {
-        if (report.isSuccess() && request.getOperation().equals(OcdsValidatorConstants.Operations.VALIDATE)) {
-            return TextNode.valueOf("OK");
-        }
-        if (report instanceof ListProcessingReport) {
-            return ((ListProcessingReport) report).asJson();
-        }
-        throw new RuntimeException("Unsupported non ListProcessingReport!");
-    }
+
 }

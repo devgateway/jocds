@@ -7,6 +7,7 @@ package org.devgateway.jocds;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.fge.jackson.JsonLoader;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
@@ -66,6 +67,16 @@ public class OcdsValidatorService {
             e.printStackTrace();
             throw new RuntimeException(e);
         }
+    }
+
+    public JsonNode processingReportToJsonNode(ProcessingReport report, OcdsValidatorRequest request) {
+        if (report.isSuccess() && request.getOperation().equals(OcdsValidatorConstants.Operations.VALIDATE)) {
+            return TextNode.valueOf("OK");
+        }
+        if (report instanceof ListProcessingReport) {
+            return ((ListProcessingReport) report).asJson();
+        }
+        throw new RuntimeException("Unsupported non ListProcessingReport!");
     }
 
     private JsonNode applyExtensions(JsonNode schemaNode, OcdsValidatorRequest request) {

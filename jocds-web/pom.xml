@@ -144,7 +144,6 @@
                 <executions>
                     <execution>
                         <goals>
-                            <!-- This will ensure a fat jar is created, will include all jar dependencies inside a /lib folder within this jar -->
                             <goal>repackage</goal>
                         </goals>
                     </execution>

@@ -3,7 +3,7 @@
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-package org.devgateway.jocds.cli;
+package org.devgateway.jocds;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.text.SimpleDateFormat;

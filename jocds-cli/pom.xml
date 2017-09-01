@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.devgateway.jocds</groupId>
         <artifactId>jocds</artifactId>
-        <version>0.2.2-SNAPSHOT</version>
+        <version>0.2.2</version>
     </parent>
 
     <dependencies>
@@ -38,7 +38,7 @@
         <dependency>
             <groupId>org.devgateway.jocds</groupId>
             <artifactId>jocds-core</artifactId>
-            <version>0.2.2-SNAPSHOT</version>
+            <version>0.2.2</version>
         </dependency>
 
         <dependency>

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.ApiInfoBuilder;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.Contact;
 import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
@@ -21,7 +22,6 @@ import static springfox.documentation.builders.PathSelectors.regex;
 @EnableSwagger2
 public class ValidatorSwaggerConfig {
 
-
     @Bean
     public Docket validatorApi() {
         return new Docket(DocumentationType.SWAGGER_2).groupName("jocds").apiInfo(validatorApiInfo())
@@ -30,9 +30,17 @@ public class ValidatorSwaggerConfig {
 
     private ApiInfo validatorApiInfo() {
         return new ApiInfoBuilder().title("jOCDS - The Open Contracting Data Standard (OCDS) Java Validator")
-                .description("Validates OCDS json resources, resource packages, URLs, with or without extensions")
-                .license("MIT License")
-                .licenseUrl("https://opensource.org/licenses/MIT").version("1.0").build();
+                .description("Validates <a href='http://standard.open-contracting.org/'>OCDS</a> JSON resources, "
+                        + "resource packages, URLs, with or without extensions.<br/>"
+                        + "<a href='https://github.com/devgateway/jocds'>Source Code & Documentation</a><br/>"
+                        + "<a href='https://bintray.com/devgateway/jocds/jocds'>Download latest version from Bintray"
+                        + "</a>")
+                .license("jOCDS is open-source software released under the MIT license.")
+                .version("0.2.0")
+                .contact(new Contact("Mihai Postelnicu", "http://developmentgateway.org",
+                        "mpostelnicu@developmentgateway.org"))
+                .termsOfServiceUrl("http://www.developmentgateway.org/privacy-and-terms")
+                .licenseUrl("https://opensource.org/licenses/MIT").version("0.2").build();
     }
 
 }

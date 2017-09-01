@@ -10,6 +10,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Properties;
+import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorNodeRequest;
 import org.devgateway.jocds.OcdsValidatorRequest;
 import org.devgateway.jocds.OcdsValidatorService;
@@ -27,10 +28,13 @@ import org.springframework.validation.Validator;
 public class CliRunner implements CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(CliRunner.class);
+
     @Autowired
     private OcdsValidatorService ocdsValidatorService;
+
     @Autowired
     private Validator validator;
+
     private Properties properties = new Properties();
 
     private void printUsage() throws IOException {
@@ -50,6 +54,14 @@ public class CliRunner implements CommandLineRunner {
 
         if (properties.containsKey(CliConstants.PARAM_VERSION)) {
             request.setVersion(properties.getProperty(CliConstants.PARAM_VERSION));
+        }
+
+        if (properties.containsKey(CliConstants.PARAM_EXTENSIONS)) {
+            String extensionsString = properties.getProperty(CliConstants.PARAM_EXTENSIONS);
+            String[] extensions = extensionsString.split(",");
+            for (int i = 0; i < extensions.length; i++) {
+                request.getExtensions().add(extensions[i]);
+            }
         }
 
         return request;
@@ -77,6 +89,13 @@ public class CliRunner implements CommandLineRunner {
         return true;
     }
 
+    private void validateAndPrintUsage(Object object, String name) throws IOException {
+        if (!validateObject(object, name)) {
+            printUsage();
+            return;
+        }
+    }
+
     @Override
     public void run(String... strings) throws Exception {
         if (strings.length == 0) {
@@ -96,21 +115,22 @@ public class CliRunner implements CommandLineRunner {
         System.out.println("jocds invoked with parameters: " + properties.toString());
         System.out.println();
 
-        if (properties.containsKey(CliConstants.PARAM_FILE)) {
+        if (properties.containsKey(CliConstants.PARAM_OPERATION)
+                && !properties.getProperty(CliConstants.PARAM_OPERATION)
+                .equals(OcdsValidatorConstants.Operations.VALIDATE)) {
+            OcdsValidatorNodeRequest request = new OcdsValidatorNodeRequest(createCommonValidatorRequest(), null);
+            validateAndPrintUsage(request, "request");
+            System.out.println(ocdsValidatorService.processingReportToJsonNode(
+                    ocdsValidatorService.validate(request), request));
+        } else if (properties.containsKey(CliConstants.PARAM_FILE)) {
             OcdsValidatorNodeRequest fileValidationRequest = createFileValidationRequest();
-            if (!validateObject(fileValidationRequest, "fileValidationRequest")) {
-                printUsage();
-                return;
-            }
+            validateAndPrintUsage(fileValidationRequest, "fileValidationRequest");
             System.out.println(ocdsValidatorService.processingReportToJsonNode(
                     ocdsValidatorService.validate(fileValidationRequest), fileValidationRequest));
         } else {
             if (properties.containsKey(CliConstants.PARAM_URL)) {
                 OcdsValidatorUrlRequest urlValidationRequest = createUrlValidationRequest();
-                if (!validateObject(urlValidationRequest, "urlValidationRequest")) {
-                    printUsage();
-                    return;
-                }
+                validateAndPrintUsage(urlValidationRequest, "urlValidationRequest");
                 System.out.println(ocdsValidatorService.processingReportToJsonNode(
                         ocdsValidatorService.validate(urlValidationRequest), urlValidationRequest));
             } else {

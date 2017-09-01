@@ -1,15 +1,56 @@
-# jOCDS - Open Contracting Data Standard Validator - Web API Component
+# jOCDS - Web API Component
 
-## Presentation
+## Prerequisites & Installation
 
-The Web Component will package jOCDS as a web service executable. By invoking
-it from the command line the web server will start up and wait for requests on port
-8080.
+The only pre-requisite is [Java8](https://java.com/en/download/).
+
+We continously publish versions of jOCDS on [Bintray](https://bintray.com/devgateway/jocds/jocds).
+You can download the latest version of jocds-web from the bottom of the page, in the "Downloads" section.
+
+After downloading the jar file, you should be able to start it by double clicking on it, or from the command line using
+
+```
+java -jar jocds-web-[version].jar
+```
+
+for example if you have downloaded `jocds-web-0.2.0.jar` you should be able to start it using
+
+```
+java -jar jocds-web-0.2.0.jar
+```
+
+## Tweaking jOCDS startup
+
+The application should be accessible in your browser on http://localhost:8080
+
+### Changing the HTTP port
+
+You can change the default HTTP port by using the `server.port` startup parameter:
+
+```
+java -jar jocds-web-0.2.0.jar --server.port=9000
+```
+
+### Disable gzip compression
+
+The content response of jOCDS is gzipped if larger than 1024 bytes. If for some reason you wish to disable that, you can start jOCDS with:
+
+```
+java -jar jocds-web-0.2.0.jar --server.compression.enabled=false
+```
+
+### Make startup log less verbose
+
+By default, jocds-web produces some status log messages during intialization. The verbosity can be reduced with `logging.level.root` parameter:
+
+```
+java -jar jocds-web-0.2.0.jar --logging.level.root=ERROR
+```
 
 ## Swagger and the documented API
 
-The Web server will automatically start a Swagger application which can be used
-to browse the API and the endpoints using http://localhost:8080/swagger-ui.html
+The Web server will automatically start a [Swagger](https://swagger.io/) application which can be used
+to browse the API and the endpoints using http://localhost:8080/
 
 ## Endpoints
 
@@ -237,7 +278,7 @@ this could help see what costs will a migration to a new OCDS version cost and c
 
 ### Getting info about extensions
 
-jOCDS has extensive extension support. Schemas are patched using jsonmerge patches and then are cached for later reuse.
+jOCDS has comprehensive extension support. Schemas are patched using jsonmerge patches and then are cached for later reuse.
 This should leverage good throughput for validating large number of releases with similar extensions (a very common use case).
 
 Second, jOCDS supports all core OCDS extensions in offline mode. To list all the extensions that are natively supported by

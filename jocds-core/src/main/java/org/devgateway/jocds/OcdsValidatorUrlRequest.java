@@ -26,4 +26,8 @@ public class OcdsValidatorUrlRequest extends OcdsValidatorRequest {
         super(request);
         this.url = url;
     }
+
+    public OcdsValidatorUrlRequest() {
+
+    }
 }

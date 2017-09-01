@@ -1,2 +1,2 @@
 
-jocds : The Java Open Contracting Data Standard Validator 0.2.1 : Copyright (c) 2017 Development Gateway, Inc
+jocds : The Java Open Contracting Data Standard Validator 0.2.2 : Copyright (c) 2017 Development Gateway, Inc

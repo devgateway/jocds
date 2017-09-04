@@ -4,8 +4,6 @@ jOCDS - The Java Open Contracting Data Standard Validator
 [![Build Status](https://travis-ci.org/devgateway/jocds.svg?branch=master)](https://travis-ci.org/devgateway/jocds)
 [ ![Download](https://api.bintray.com/packages/devgateway/jocds/jocds/images/download.svg) ](https://bintray.com/devgateway/jocds/jocds/_latestVersion)
 
-# Introduction
-
 The [Open Contracting Data Standard (OCDS)](http://standard.open-contracting.org) is a standards development initiative issued by
 the Omidyar Network and the World Bank [which commenced in November 2014](http://standard.open-contracting.org/latest/en/support/history_and_development/).
 
@@ -13,8 +11,6 @@ The standard facilitates publishing data about public procurement of goods, work
 and services and can be easily extended to be used in other contexts.
 
 It has been adopted in more than 25 countries and cities working on open contracting.
-
-# Problem
 
 The purpose of adopting the standard is structuring the internal data in a format using JSON and following a structure template called
 as schema (JSON Schema). The schema is developed and maintained by [Open Contracting Partnership (OCP)](https://www.open-contracting.org/).

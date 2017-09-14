@@ -31,6 +31,13 @@ public final class OcdsValidatorConstants {
 
     }
 
+    public static final class CustomSchemaKeywords {
+        /**
+         * See http://standard.open-contracting.org/latest/en/schema/deprecation/
+         */
+        public static final String DEPRECATED = "deprecated";
+    }
+
     public static final class Schemas {
         public static final String RELEASE = "release";
         public static final String RELEASE_PACKAGE = "release-package";

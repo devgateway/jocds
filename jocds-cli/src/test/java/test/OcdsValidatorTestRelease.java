@@ -38,7 +38,7 @@ public class OcdsValidatorTestRelease {
     @Test
     public void testReleaseValidation() {
 
-        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_0,
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_1,
                 OcdsValidatorConstants.EXTENSIONS, OcdsValidatorConstants.Schemas.RELEASE);
         request.setJson(getJsonFromResource("/full-release.json"));
 

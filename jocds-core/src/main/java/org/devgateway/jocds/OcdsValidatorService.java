@@ -9,16 +9,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.fge.jackson.JsonLoader;
+import com.github.fge.jackson.NodeType;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
+import com.github.fge.jsonschema.cfg.ValidationConfiguration;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ListProcessingReport;
 import com.github.fge.jsonschema.core.report.ListReportProvider;
 import com.github.fge.jsonschema.core.report.LogLevel;
 import com.github.fge.jsonschema.core.report.ProcessingMessage;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
+import com.github.fge.jsonschema.library.DraftV4Library;
+import com.github.fge.jsonschema.library.Keyword;
+import com.github.fge.jsonschema.library.Library;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.github.fge.jsonschema.messages.JsonSchemaValidationBundle;
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
+import com.github.fge.msgsimple.source.MapMessageSource;
+import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
 import java.io.IOException;
@@ -27,6 +37,8 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.PostConstruct;
+import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
+import org.devgateway.jocds.jsonschema.validator.DeprecatedValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,6 +68,8 @@ public class OcdsValidatorService {
 
     @Autowired
     private ObjectMapper jacksonObjectMapper;
+
+    private ValidationConfiguration validationConfiguration;
 
     private JsonNode getUnmodifiedSchemaNode(OcdsValidatorRequest request) {
         try {
@@ -236,6 +250,7 @@ public class OcdsValidatorService {
             schemaNode = applyExtensions(schemaNode, request);
             try {
                 JsonSchema schema = JsonSchemaFactory.newBuilder()
+                        .setValidationConfiguration(validationConfiguration)
                         .setReportProvider(new ListReportProvider(LogLevel.ERROR, LogLevel.NONE)).freeze()
                         .getJsonSchema(schemaNode);
                 logger.debug("Saving to cache schema with extensions " + request.getKey());
@@ -289,6 +304,45 @@ public class OcdsValidatorService {
         initSchemaNamePrefix();
         initMajorLatestFullVersion();
         initExtensions();
+        initJsonSchemaFactory();
+    }
+
+    private Keyword createDeprecatedKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.DEPRECATED)
+                .withSyntaxChecker(DeprecatedSyntaxChecker.getInstance())
+                .withSimpleDigester(NodeType.OBJECT)
+                .withValidatorClass(DeprecatedValidator.class)
+                .freeze();
+    }
+
+    /**
+     * This method initializes the custom json schema factory
+     */
+    private void initJsonSchemaFactory() {
+        /*
+         * Build a library, based on the v4 library, with this new keyword
+         */
+        final Library library = DraftV4Library.get().thaw()
+                .addKeyword(createDeprecatedKeyword()).freeze();
+
+        validationConfiguration = ValidationConfiguration.newBuilder()
+                .setDefaultLibrary("https://www.open-contracting.org/data-standard/", library)
+                .setValidationMessages(createJsonSchemaCustomMessages()).freeze();
+
+    }
+
+    /**
+     * These are custom messages used by the validator to report warnings and errors
+     */
+    private MessageBundle createJsonSchemaCustomMessages() {
+        final String key = "missingDivisors";
+        final String value = "integer value is not a multiple of all divisors";
+        final MessageSource source = MapMessageSource.newBuilder()
+                .put(key, value).build();
+        final MessageBundle bundle
+                = MessageBundles.getBundle(JsonSchemaValidationBundle.class)
+                .thaw().appendSource(source).freeze();
+        return bundle;
     }
 
     public ProcessingReport validate(OcdsValidatorStringRequest request) {

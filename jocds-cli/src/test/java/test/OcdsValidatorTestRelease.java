@@ -6,10 +6,6 @@
 package test;
 
 import com.github.fge.jsonschema.core.report.ProcessingReport;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.TreeSet;
 import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorService;
 import org.devgateway.jocds.OcdsValidatorStringRequest;
@@ -22,6 +18,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StreamUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.TreeSet;
 
 /**
  * Created by mpostelnicu on 7/7/17.
@@ -72,7 +73,7 @@ public class OcdsValidatorTestRelease {
     @Test
     public void testReleasePackageValidation() {
 
-        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_0,
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_3,
                new TreeSet<>(OcdsValidatorConstants.EXTENSIONS), OcdsValidatorConstants.Schemas.RELEASE_PACKAGE);
 
         request.setJson(getJsonFromResource("/release-package.json"));

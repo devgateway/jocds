@@ -31,7 +31,7 @@ import java.util.TreeSet;
 @ActiveProfiles("integration")
 @SpringBootTest(classes = {ValidatorApplication.class})
 //@TestPropertySource("classpath:test.properties")
-public class OcdsValidatorTestRelease {
+public class TestOcdsValidatorRelease {
 
     @Autowired
     private OcdsValidatorService ocdsValidatorService;

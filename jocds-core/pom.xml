@@ -19,8 +19,8 @@
         <java.version>1.8</java.version>
         <json.patch.version>1.9</json.patch.version>
         <json.schema.validator.version>2.2.6</json.schema.validator.version>
-        <semver4j.version>2.0.3</semver4j.version>
-        <swagger.annotations.version>1.5.10</swagger.annotations.version>
+        <semver4j.version>2.2.0</semver4j.version>
+        <swagger.annotations.version>1.5.19</swagger.annotations.version>
     </properties>
 
     <parent>

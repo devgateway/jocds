@@ -47,6 +47,14 @@ import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * Created by mpostelnicu on 7/5/17.
  */
@@ -154,7 +162,17 @@ public class OcdsValidatorService {
         }
 
         Semver requestedVersion = new Semver(fullVersion, Semver.SemverType.NPM);
-        return requestedVersion.satisfies(Requirement.buildNPM(patchSemverNPMWildcardNotWorking(compatNode.asText())));
+        if (compatNode.isArray()) { //support new array compatibility in 1.1.3
+            boolean ret = false;
+            for (final JsonNode node : compatNode) {
+                ret |= requestedVersion.satisfies(
+                        Requirement.buildNPM(patchSemverNPMWildcardNotWorking(node.asText())));
+            }
+            return ret;
+        } else { //old 1.1.1 non array compat
+            return requestedVersion.satisfies(
+                    Requirement.buildNPM(patchSemverNPMWildcardNotWorking(compatNode.asText())));
+        }
     }
 
     /**
@@ -170,7 +188,12 @@ public class OcdsValidatorService {
         }
 
         if (split.length == 2) {
-            return version + ".0";
+            version += ".0";
+            if (version.contains(">")) {
+                return version;
+            } else {
+                return ">=" + version;
+            }
         }
 
         return version;
@@ -185,8 +208,10 @@ public class OcdsValidatorService {
 
         //attempt load via URL
         try {
-            String releaseUrl = id.replace(OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
-                    OcdsValidatorConstants.EXTENSION_RELEASE_JSON);
+            String releaseUrl = id.replace(
+                    OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
+                    OcdsValidatorConstants.EXTENSION_RELEASE_JSON
+            );
             JsonMergePatch patch = readExtensionReleaseJson(new URL(releaseUrl));
             extensionReleaseJson.put(id, patch);
             return patch;
@@ -267,10 +292,14 @@ public class OcdsValidatorService {
     private void initSchemaNamePrefix() {
         logger.debug("Initializing prefixes for all available schemas");
         schemaNamePrefix.put(OcdsValidatorConstants.Schemas.RELEASE, OcdsValidatorConstants.SchemaPrefixes.RELEASE);
-        schemaNamePrefix.put(OcdsValidatorConstants.Schemas.RECORD_PACKAGE,
-                OcdsValidatorConstants.SchemaPrefixes.RECORD_PACKAGE);
-        schemaNamePrefix.put(OcdsValidatorConstants.Schemas.RELEASE_PACKAGE,
-                OcdsValidatorConstants.SchemaPrefixes.RELEASE_PACKAGE);
+        schemaNamePrefix.put(
+                OcdsValidatorConstants.Schemas.RECORD_PACKAGE,
+                OcdsValidatorConstants.SchemaPrefixes.RECORD_PACKAGE
+        );
+        schemaNamePrefix.put(
+                OcdsValidatorConstants.Schemas.RELEASE_PACKAGE,
+                OcdsValidatorConstants.SchemaPrefixes.RELEASE_PACKAGE
+        );
     }
 
     private void initExtensions() {
@@ -473,7 +502,9 @@ public class OcdsValidatorService {
             }
 
             //get release package extensions
-            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+            if (nodeRequest.getExtensions() == null && nodeRequest.getNode()
+                    .hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+                nodeRequest.setExtensions(new TreeSet<>());
                 for (JsonNode extension : nodeRequest.getNode().get(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
                     nodeRequest.getExtensions().add(extension.asText());
                 }

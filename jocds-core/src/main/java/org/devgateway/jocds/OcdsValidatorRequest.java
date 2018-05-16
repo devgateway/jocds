@@ -6,10 +6,11 @@
 package org.devgateway.jocds;
 
 import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.validation.constraints.Pattern;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * Created by mpostelnicu on 7/5/17.
@@ -69,7 +70,7 @@ public class OcdsValidatorRequest {
 
     @NotEmpty(message = "Please provide schemaType!")
     @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
-            + "and release-package")
+            + "and release-package", required = true)
     @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
             + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)
     private String schemaType;

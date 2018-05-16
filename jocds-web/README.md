@@ -13,10 +13,10 @@ After downloading the jar file, you should be able to start it by double clickin
 java -jar jocds-web-[version].jar
 ```
 
-for example if you have downloaded `jocds-web-0.2.0.jar` you should be able to start it using
+for example if you have downloaded `jocds-web-0.3.0.jar` you should be able to start it using
 
 ```
-java -jar jocds-web-0.2.0.jar
+java -jar jocds-web-0.3.0.jar
 ```
 
 ## Tweaking jOCDS startup
@@ -28,7 +28,7 @@ The application should be accessible in your browser on http://localhost:8080
 You can change the default HTTP port by using the `server.port` startup parameter:
 
 ```
-java -jar jocds-web-0.2.0.jar --server.port=9000
+java -jar jocds-web-0.3.0.jar --server.port=9000
 ```
 
 ### Disable gzip compression
@@ -36,7 +36,7 @@ java -jar jocds-web-0.2.0.jar --server.port=9000
 The content response of jOCDS is gzipped if larger than 1024 bytes. If for some reason you wish to disable that, you can start jOCDS with:
 
 ```
-java -jar jocds-web-0.2.0.jar --server.compression.enabled=false
+java -jar jocds-web-0.3.0.jar --server.compression.enabled=false
 ```
 
 ### Make startup log less verbose
@@ -44,7 +44,7 @@ java -jar jocds-web-0.2.0.jar --server.compression.enabled=false
 By default, jocds-web produces some status log messages during intialization. The verbosity can be reduced with `logging.level.root` parameter:
 
 ```
-java -jar jocds-web-0.2.0.jar --logging.level.root=ERROR
+java -jar jocds-web-0.3.0.jar --logging.level.root=ERROR
 ```
 
 ## Swagger and the documented API

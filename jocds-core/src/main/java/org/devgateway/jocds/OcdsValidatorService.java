@@ -5,6 +5,7 @@
 
 package org.devgateway.jocds;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -31,13 +32,13 @@ import com.github.fge.msgsimple.source.MapMessageSource;
 import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.PostConstruct;
+import org.devgateway.jocds.jsonschema.checker.CodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.MergeStrategySyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.OmitWhenMergedSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.OpenCodelistSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.VersionIdSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.WholeListMergeSyntaxChecker;
 import org.devgateway.jocds.jsonschema.validator.DeprecatedValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,6 +55,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * Created by mpostelnicu on 7/5/17.
@@ -91,10 +93,26 @@ public class OcdsValidatorService {
         }
     }
 
+
+    public String processingReportToJsonText(ProcessingReport report, OcdsValidatorRequest request) {
+        try {
+            return jacksonObjectMapper.writeValueAsString(processingReportToJsonNode(report, request));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public JsonNode processingReportToJsonNode(ProcessingReport report, OcdsValidatorRequest request) {
         if (report.isSuccess() && request.getOperation().equals(OcdsValidatorConstants.Operations.VALIDATE)) {
-            return TextNode.valueOf("OK");
+            JsonNode r = ((ListProcessingReport) report).asJson();
+            if (r.toString().length() == 2) {
+                return TextNode.valueOf("OK");
+            } else {
+                return r;
+            }
         }
+
         if (report instanceof ListProcessingReport) {
             return ((ListProcessingReport) report).asJson();
         }
@@ -276,7 +294,7 @@ public class OcdsValidatorService {
             try {
                 JsonSchema schema = JsonSchemaFactory.newBuilder()
                         .setValidationConfiguration(validationConfiguration)
-                        .setReportProvider(new ListReportProvider(LogLevel.ERROR, LogLevel.NONE)).freeze()
+                        .setReportProvider(new ListReportProvider(LogLevel.WARNING, LogLevel.NONE)).freeze()
                         .getJsonSchema(schemaNode);
                 logger.debug("Saving to cache schema with extensions " + request.getKey());
                 keySchema.put(request.getKey(), schema);
@@ -339,10 +357,49 @@ public class OcdsValidatorService {
     private Keyword createDeprecatedKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.DEPRECATED)
                 .withSyntaxChecker(DeprecatedSyntaxChecker.getInstance())
-                .withSimpleDigester(NodeType.OBJECT)
+                .withIdentityDigester(NodeType.ARRAY, NodeType.OBJECT)
                 .withValidatorClass(DeprecatedValidator.class)
                 .freeze();
     }
+
+    private Keyword createMergeStrategyKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.MERGE_STRATEGY)
+                .withSyntaxChecker(MergeStrategySyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword createWholeListMergeKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.WHOLE_LIST_MERGE)
+                .withSyntaxChecker(WholeListMergeSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword createOmitWhenMergedKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OMIT_WHEN_MERGED)
+                .withSyntaxChecker(OmitWhenMergedSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+
+    private Keyword createVersionIdKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.VERSION_ID)
+                .withSyntaxChecker(VersionIdSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+
+    private Keyword openCodelistKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OPEN_CODE_LIST)
+                .withSyntaxChecker(OpenCodelistSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword codelistKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST)
+                .withSyntaxChecker(CodelistSyntaxChecker.getInstance())
+                .freeze();
+    }
+
 
     /**
      * This method initializes the custom json schema factory
@@ -352,10 +409,22 @@ public class OcdsValidatorService {
          * Build a library, based on the v4 library, with this new keyword
          */
         final Library library = DraftV4Library.get().thaw()
-                .addKeyword(createDeprecatedKeyword()).freeze();
+                .addKeyword(createDeprecatedKeyword())
+                .addKeyword(createWholeListMergeKeyword())
+                .addKeyword(createVersionIdKeyword())
+                .addKeyword(openCodelistKeyword())
+                .addKeyword(codelistKeyword())
+                .addKeyword(createOmitWhenMergedKeyword())
+                .addKeyword(createMergeStrategyKeyword())
+                .freeze();
 
         validationConfiguration = ValidationConfiguration.newBuilder()
-                .setDefaultLibrary("https://www.open-contracting.org/data-standard/", library)
+                .setDefaultLibrary(
+                        "https://raw.githubusercontent"
+                                + ".com/open-contracting/standard/1.1-dev/standard/schema/metaschema/json-schema"
+                                + "-draft-4.json",
+                        library
+                )
                 .setValidationMessages(createJsonSchemaCustomMessages()).freeze();
 
     }
@@ -364,8 +433,12 @@ public class OcdsValidatorService {
      * These are custom messages used by the validator to report warnings and errors
      */
     private MessageBundle createJsonSchemaCustomMessages() {
-        final String key = "missingDivisors";
-        final String value = "integer value is not a multiple of all divisors";
+        final String key = "warn.jocds.deprecatedValidator";
+        final String value = "This element has been marked deprecated and will soon be removed from the OCDS standard !"
+                + " This will be either due to limited use, or because they have been replaced by alternative fields "
+                + "or codelists. Before a field or codelist value is removed, "
+                + "it will be first marked as deprecated in a major or minor release (e.g. in 1.1), and removal will "
+                + "only take place, subject to the governance process, in the next major version (e.g. 2.0).";
         final MessageSource source = MapMessageSource.newBuilder()
                 .put(key, value).build();
         final MessageBundle bundle

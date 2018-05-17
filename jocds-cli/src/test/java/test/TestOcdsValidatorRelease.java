@@ -39,14 +39,14 @@ public class TestOcdsValidatorRelease {
     @Test
     public void testReleaseValidation() {
 
-        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_1,
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_3,
                 OcdsValidatorConstants.EXTENSIONS, OcdsValidatorConstants.Schemas.RELEASE);
         request.setJson(getJsonFromResource("/full-release.json"));
 
         ProcessingReport processingReport = ocdsValidatorService.validate(request);
-        if (!processingReport.isSuccess()) {
-            System.out.println(processingReport);
-        }
+
+        System.out.println(ocdsValidatorService.processingReportToJsonText(
+                ocdsValidatorService.validate(request), request));
 
         Assert.assertTrue(processingReport.isSuccess());
 

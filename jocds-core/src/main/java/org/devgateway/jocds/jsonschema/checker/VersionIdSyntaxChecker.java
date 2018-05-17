@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017. Development Gateway and contributors. All rights reserved.
+ * Copyright (c) 2018. Development Gateway and contributors. All rights reserved.
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
@@ -17,21 +17,16 @@ import org.devgateway.jocds.OcdsValidatorConstants;
 
 import java.util.Collection;
 
-/**
- * This adds functionality for "deprecated" keyword.
- * http://standard.open-contracting.org/latest/en/schema/deprecation/
- * It will print warning messages when deprecated elements are found
- */
-public final class DeprecatedSyntaxChecker extends AbstractSyntaxChecker {
+public final class VersionIdSyntaxChecker extends AbstractSyntaxChecker {
 
-    private static final SyntaxChecker INSTANCE = new DeprecatedSyntaxChecker();
+    private static final SyntaxChecker INSTANCE = new VersionIdSyntaxChecker();
 
     public static SyntaxChecker getInstance() {
         return INSTANCE;
     }
 
-    private DeprecatedSyntaxChecker() {
-        super(OcdsValidatorConstants.CustomSchemaKeywords.DEPRECATED, NodeType.OBJECT);
+    private VersionIdSyntaxChecker() {
+        super(OcdsValidatorConstants.CustomSchemaKeywords.VERSION_ID, NodeType.BOOLEAN);
     }
 
     @Override

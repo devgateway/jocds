@@ -39,6 +39,12 @@ public final class OcdsValidatorConstants {
          * See http://standard.open-contracting.org/latest/en/schema/deprecation/
          */
         public static final String DEPRECATED = "deprecated";
+        public static final String WHOLE_LIST_MERGE = "wholeListMerge";
+        public static final String OMIT_WHEN_MERGED = "omitWhenMerged";
+        public static final String MERGE_STRATEGY = "mergeStrategy";
+        public static final String VERSION_ID = "versionId";
+        public static final String OPEN_CODE_LIST = "openCodelist";
+        public static final String CODE_LIST = "codelist";
     }
 
     public static final class Schemas {

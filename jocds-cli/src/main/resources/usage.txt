@@ -12,6 +12,6 @@ $ jocds-cli [-operation=] -schema-type= [-version=] [-extensions=] [-url=] [-fil
 
 Examples:
 
-java -jar jocds-cli-0.3.0.jar -verbosity=error -operation=validate -schema-type=release-package -url=https://raw.githubusercontent.com/open-contracting/sample-data/master/fictional-example/1.1/ocds-213czf-000-00001-02-tender.json
-java -jar jocds-cli-0.3.0.jar -operation=show-supported-ocds -schema-type=release-package
-java -jar jocds-cli-0.3.0.jar -operation=show-builtin-extensions -schema-type=release-package
+java -jar jocds-cli-0.3.1.jar -verbosity=error -operation=validate -schema-type=release-package -url=https://raw.githubusercontent.com/open-contracting/sample-data/master/fictional-example/1.1/ocds-213czf-000-00001-02-tender.json
+java -jar jocds-cli-0.3.1.jar -operation=show-supported-ocds -schema-type=release-package
+java -jar jocds-cli-0.3.1.jar -operation=show-builtin-extensions -schema-type=release-package

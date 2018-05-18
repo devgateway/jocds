@@ -50,6 +50,7 @@ public class OcdsValidatorRequest {
      * @return
      */
     @JsonIgnore
+    @ApiModelProperty(hidden = true)
     public String getKey() {
         return schemaType + "-" + version + "-" + extensions + "-" + verbosity;
     }

@@ -6,10 +6,6 @@
 package org.devgateway.jocds.cli;
 
 import com.github.fge.jackson.JsonLoader;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.util.Properties;
 import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorNodeRequest;
 import org.devgateway.jocds.OcdsValidatorRequest;
@@ -23,6 +19,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StreamUtils;
 import org.springframework.validation.DirectFieldBindingResult;
 import org.springframework.validation.Validator;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.Properties;
 
 @Component
 public class CliRunner implements CommandLineRunner {
@@ -54,6 +55,10 @@ public class CliRunner implements CommandLineRunner {
 
         if (properties.containsKey(CliConstants.PARAM_VERSION)) {
             request.setVersion(properties.getProperty(CliConstants.PARAM_VERSION));
+        }
+
+        if (properties.containsKey(CliConstants.PARAM_VERBOSITY)) {
+            request.setVerbosity(properties.getProperty(CliConstants.PARAM_VERBOSITY));
         }
 
         if (properties.containsKey(CliConstants.PARAM_EXTENSIONS)) {
@@ -120,18 +125,18 @@ public class CliRunner implements CommandLineRunner {
                 .equals(OcdsValidatorConstants.Operations.VALIDATE)) {
             OcdsValidatorNodeRequest request = new OcdsValidatorNodeRequest(createCommonValidatorRequest(), null);
             validateAndPrintUsage(request, "request");
-            System.out.println(ocdsValidatorService.processingReportToJsonNode(
+            System.out.println(ocdsValidatorService.processingReportToJsonText(
                     ocdsValidatorService.validate(request), request));
         } else if (properties.containsKey(CliConstants.PARAM_FILE)) {
             OcdsValidatorNodeRequest fileValidationRequest = createFileValidationRequest();
             validateAndPrintUsage(fileValidationRequest, "fileValidationRequest");
-            System.out.println(ocdsValidatorService.processingReportToJsonNode(
+            System.out.println(ocdsValidatorService.processingReportToJsonText(
                     ocdsValidatorService.validate(fileValidationRequest), fileValidationRequest));
         } else {
             if (properties.containsKey(CliConstants.PARAM_URL)) {
                 OcdsValidatorUrlRequest urlValidationRequest = createUrlValidationRequest();
                 validateAndPrintUsage(urlValidationRequest, "urlValidationRequest");
-                System.out.println(ocdsValidatorService.processingReportToJsonNode(
+                System.out.println(ocdsValidatorService.processingReportToJsonText(
                         ocdsValidatorService.validate(urlValidationRequest), urlValidationRequest));
             } else {
                 printUsage();

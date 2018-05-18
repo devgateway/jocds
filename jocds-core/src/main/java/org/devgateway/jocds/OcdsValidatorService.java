@@ -5,22 +5,41 @@
 
 package org.devgateway.jocds;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.github.fge.jackson.JsonLoader;
+import com.github.fge.jackson.NodeType;
 import com.github.fge.jsonpatch.JsonPatchException;
 import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
+import com.github.fge.jsonschema.cfg.ValidationConfiguration;
 import com.github.fge.jsonschema.core.exceptions.ProcessingException;
 import com.github.fge.jsonschema.core.report.ListProcessingReport;
 import com.github.fge.jsonschema.core.report.ListReportProvider;
 import com.github.fge.jsonschema.core.report.LogLevel;
 import com.github.fge.jsonschema.core.report.ProcessingMessage;
 import com.github.fge.jsonschema.core.report.ProcessingReport;
+import com.github.fge.jsonschema.library.DraftV4Library;
+import com.github.fge.jsonschema.library.Keyword;
+import com.github.fge.jsonschema.library.Library;
 import com.github.fge.jsonschema.main.JsonSchema;
 import com.github.fge.jsonschema.main.JsonSchemaFactory;
+import com.github.fge.jsonschema.messages.JsonSchemaValidationBundle;
+import com.github.fge.msgsimple.bundle.MessageBundle;
+import com.github.fge.msgsimple.load.MessageBundles;
+import com.github.fge.msgsimple.source.MapMessageSource;
+import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
+import org.devgateway.jocds.jsonschema.checker.CodelistSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.MergeStrategySyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.OmitWhenMergedSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.OpenCodelistSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.VersionIdSyntaxChecker;
+import org.devgateway.jocds.jsonschema.checker.WholeListMergeSyntaxChecker;
+import org.devgateway.jocds.jsonschema.validator.DeprecatedValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +55,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * Created by mpostelnicu on 7/5/17.
@@ -59,6 +79,8 @@ public class OcdsValidatorService {
     @Autowired
     private ObjectMapper jacksonObjectMapper;
 
+    private ValidationConfiguration validationConfiguration;
+
     private JsonNode getUnmodifiedSchemaNode(OcdsValidatorRequest request) {
         try {
             logger.debug("Loading unmodified schema node of type " + request.getSchemaType() + " version "
@@ -71,10 +93,26 @@ public class OcdsValidatorService {
         }
     }
 
+
+    public String processingReportToJsonText(ProcessingReport report, OcdsValidatorRequest request) {
+        try {
+            return jacksonObjectMapper.writeValueAsString(processingReportToJsonNode(report, request));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public JsonNode processingReportToJsonNode(ProcessingReport report, OcdsValidatorRequest request) {
         if (report.isSuccess() && request.getOperation().equals(OcdsValidatorConstants.Operations.VALIDATE)) {
-            return TextNode.valueOf("OK");
+            JsonNode r = ((ListProcessingReport) report).asJson();
+            if (r.toString().length() == 2) {
+                return TextNode.valueOf("OK");
+            } else {
+                return r;
+            }
         }
+
         if (report instanceof ListProcessingReport) {
             return ((ListProcessingReport) report).asJson();
         }
@@ -254,8 +292,11 @@ public class OcdsValidatorService {
             JsonNode schemaNode = getUnmodifiedSchemaNode(request);
             schemaNode = applyExtensions(schemaNode, request);
             try {
+                LogLevel logLevel = request.getVerbosity().equals(OcdsValidatorConstants.LogLevel.ERROR)
+                        ? LogLevel.ERROR : LogLevel.WARNING;
                 JsonSchema schema = JsonSchemaFactory.newBuilder()
-                        .setReportProvider(new ListReportProvider(LogLevel.ERROR, LogLevel.NONE)).freeze()
+                        .setValidationConfiguration(validationConfiguration)
+                        .setReportProvider(new ListReportProvider(logLevel, LogLevel.NONE)).freeze()
                         .getJsonSchema(schemaNode);
                 logger.debug("Saving to cache schema with extensions " + request.getKey());
                 keySchema.put(request.getKey(), schema);
@@ -312,6 +353,100 @@ public class OcdsValidatorService {
         initSchemaNamePrefix();
         initMajorLatestFullVersion();
         initExtensions();
+        initJsonSchemaFactory();
+    }
+
+    private Keyword createDeprecatedKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.DEPRECATED)
+                .withSyntaxChecker(DeprecatedSyntaxChecker.getInstance())
+                .withIdentityDigester(NodeType.ARRAY, NodeType.OBJECT)
+                .withValidatorClass(DeprecatedValidator.class)
+                .freeze();
+    }
+
+    private Keyword createMergeStrategyKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.MERGE_STRATEGY)
+                .withSyntaxChecker(MergeStrategySyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword createWholeListMergeKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.WHOLE_LIST_MERGE)
+                .withSyntaxChecker(WholeListMergeSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword createOmitWhenMergedKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OMIT_WHEN_MERGED)
+                .withSyntaxChecker(OmitWhenMergedSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+
+    private Keyword createVersionIdKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.VERSION_ID)
+                .withSyntaxChecker(VersionIdSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+
+    private Keyword openCodelistKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OPEN_CODE_LIST)
+                .withSyntaxChecker(OpenCodelistSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+    private Keyword codelistKeyword() {
+        return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST)
+                .withSyntaxChecker(CodelistSyntaxChecker.getInstance())
+                .freeze();
+    }
+
+
+    /**
+     * This method initializes the custom json schema factory
+     */
+    private void initJsonSchemaFactory() {
+        /*
+         * Build a library, based on the v4 library, with this new keyword
+         */
+        final Library library = DraftV4Library.get().thaw()
+                .addKeyword(createDeprecatedKeyword())
+                .addKeyword(createWholeListMergeKeyword())
+                .addKeyword(createVersionIdKeyword())
+                .addKeyword(openCodelistKeyword())
+                .addKeyword(codelistKeyword())
+                .addKeyword(createOmitWhenMergedKeyword())
+                .addKeyword(createMergeStrategyKeyword())
+                .freeze();
+
+        validationConfiguration = ValidationConfiguration.newBuilder()
+                .setDefaultLibrary(
+                        "https://raw.githubusercontent"
+                                + ".com/open-contracting/standard/1.1-dev/standard/schema/metaschema/json-schema"
+                                + "-draft-4.json",
+                        library
+                )
+                .setValidationMessages(createJsonSchemaCustomMessages()).freeze();
+
+    }
+
+    /**
+     * These are custom messages used by the validator to report warnings and errors
+     */
+    private MessageBundle createJsonSchemaCustomMessages() {
+        final String key = "warn.jocds.deprecatedValidator";
+        final String value = "This element has been marked deprecated and will soon be removed from the OCDS standard !"
+                + " This will be either due to limited use, or because they have been replaced by alternative fields "
+                + "or codelists. Before a field or codelist value is removed, "
+                + "it will be first marked as deprecated in a major or minor release (e.g. in 1.1), and removal will "
+                + "only take place, subject to the governance process, in the next major version (e.g. 2.0).";
+        final MessageSource source = MapMessageSource.newBuilder()
+                .put(key, value).build();
+        final MessageBundle bundle
+                = MessageBundles.getBundle(JsonSchemaValidationBundle.class)
+                .thaw().appendSource(source).freeze();
+        return bundle;
     }
 
     public ProcessingReport validate(OcdsValidatorStringRequest request) {

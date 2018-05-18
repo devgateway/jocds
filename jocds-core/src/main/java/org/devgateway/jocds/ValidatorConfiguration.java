@@ -6,11 +6,13 @@
 package org.devgateway.jocds;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 /**
  * Created by mpostelnicu on 7/7/17.
@@ -26,8 +28,8 @@ public class ValidatorConfiguration {
         SimpleDateFormat dateFormatGmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
         dateFormatGmt.setTimeZone(TimeZone.getTimeZone("GMT"));
         builder.serializationInclusion(Include.NON_EMPTY).dateFormat(dateFormatGmt);
+        builder.featuresToEnable(SerializationFeature.INDENT_OUTPUT);
         builder.defaultViewInclusion(true);
-
         return builder;
     }
 

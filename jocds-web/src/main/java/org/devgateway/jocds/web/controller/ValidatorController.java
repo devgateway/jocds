@@ -7,8 +7,6 @@ package org.devgateway.jocds.web.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiOperation;
-import java.io.IOException;
-import javax.validation.Valid;
 import org.devgateway.jocds.OcdsValidatorNodeRequest;
 import org.devgateway.jocds.OcdsValidatorService;
 import org.devgateway.jocds.OcdsValidatorStringRequest;
@@ -23,6 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.validation.Valid;
+import java.io.IOException;
+
 /**
  * Created by mpostelnicu on 16-May-17.
  */
@@ -35,7 +36,7 @@ public class ValidatorController {
     @ApiOperation(value = "Validates data against Open Contracting Data Standard using x-www-form-urlencoded "
             + "media type")
     @RequestMapping(value = "/api/validateFormInline", method = {RequestMethod.GET, RequestMethod.POST},
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+            produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
     public ResponseEntity<JsonNode> validateFormInline(@Valid @ModelAttribute OcdsValidatorStringRequest request)
             throws IOException {
         return new ResponseEntity<JsonNode>(ocdsValidatorService.

@@ -558,7 +558,8 @@ public class OcdsValidatorService {
 
         if (nodeRequest.getVersion() == null) {
             //try autodetect using version in node
-            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.VERSION_PROPERTY)) {
+            if (nodeRequest.getNode() != null
+                    && nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.VERSION_PROPERTY)) {
                 String majorMinor = nodeRequest.getNode().get(OcdsValidatorConstants.VERSION_PROPERTY).asText();
                 if (!majorLatestFullVersion.containsKey(majorMinor)) {
                     throw new RuntimeException("Unrecognized package release version " + majorMinor);

@@ -30,7 +30,7 @@ public final class OcdsValidatorConstants {
         public static final String OCDS_1_1_3 = "1.1.3";
 
         public static final String[] ALL = {OCDS_1_0_0, OCDS_1_0_1, OCDS_1_0_2, OCDS_1_0_3, OCDS_1_1_0,
-        OCDS_1_1_1, OCDS_1_1_2, OCDS_1_1_3};
+                OCDS_1_1_1, OCDS_1_1_2, OCDS_1_1_3};
 
     }
 
@@ -52,6 +52,12 @@ public final class OcdsValidatorConstants {
         public static final String RELEASE_PACKAGE = "release-package";
         public static final String RECORD_PACKAGE = "record-package";
         public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE};
+    }
+
+    public static final class LogLevel {
+        public static final String WARNING = "warning";
+        public static final String ERROR = "error";
+        public static final String[] ALL = {WARNING, ERROR};
     }
 
     public static final class SchemaPrefixes {

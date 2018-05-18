@@ -57,6 +57,10 @@ public class CliRunner implements CommandLineRunner {
             request.setVersion(properties.getProperty(CliConstants.PARAM_VERSION));
         }
 
+        if (properties.containsKey(CliConstants.PARAM_VERBOSITY)) {
+            request.setVerbosity(properties.getProperty(CliConstants.PARAM_VERBOSITY));
+        }
+
         if (properties.containsKey(CliConstants.PARAM_EXTENSIONS)) {
             String extensionsString = properties.getProperty(CliConstants.PARAM_EXTENSIONS);
             String[] extensions = extensionsString.split(",");

@@ -292,9 +292,11 @@ public class OcdsValidatorService {
             JsonNode schemaNode = getUnmodifiedSchemaNode(request);
             schemaNode = applyExtensions(schemaNode, request);
             try {
+                LogLevel logLevel = request.getVerbosity().equals(OcdsValidatorConstants.LogLevel.ERROR)
+                        ? LogLevel.ERROR : LogLevel.WARNING;
                 JsonSchema schema = JsonSchemaFactory.newBuilder()
                         .setValidationConfiguration(validationConfiguration)
-                        .setReportProvider(new ListReportProvider(LogLevel.WARNING, LogLevel.NONE)).freeze()
+                        .setReportProvider(new ListReportProvider(logLevel, LogLevel.NONE)).freeze()
                         .getJsonSchema(schemaNode);
                 logger.debug("Saving to cache schema with extensions " + request.getKey());
                 keySchema.put(request.getKey(), schema);

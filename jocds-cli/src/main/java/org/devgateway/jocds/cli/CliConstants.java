@@ -17,5 +17,6 @@ public final class CliConstants {
     public static final String PARAM_VERSION = "-version";
     public static final String PARAM_URL = "-url";
     public static final String PARAM_EXTENSIONS = "-extensions";
+    public static final String PARAM_VERBOSITY = "-verbosity";
 
 }

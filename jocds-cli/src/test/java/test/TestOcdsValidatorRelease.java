@@ -6,10 +6,6 @@
 package test;
 
 import com.github.fge.jsonschema.core.report.ProcessingReport;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.Charset;
-import java.util.TreeSet;
 import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorService;
 import org.devgateway.jocds.OcdsValidatorStringRequest;
@@ -23,6 +19,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StreamUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.Charset;
+import java.util.TreeSet;
+
 /**
  * Created by mpostelnicu on 7/7/17.
  */
@@ -30,7 +31,7 @@ import org.springframework.util.StreamUtils;
 @ActiveProfiles("integration")
 @SpringBootTest(classes = {ValidatorApplication.class})
 //@TestPropertySource("classpath:test.properties")
-public class OcdsValidatorTestRelease {
+public class TestOcdsValidatorRelease {
 
     @Autowired
     private OcdsValidatorService ocdsValidatorService;
@@ -38,14 +39,14 @@ public class OcdsValidatorTestRelease {
     @Test
     public void testReleaseValidation() {
 
-        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_0,
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_3,
                 OcdsValidatorConstants.EXTENSIONS, OcdsValidatorConstants.Schemas.RELEASE);
         request.setJson(getJsonFromResource("/full-release.json"));
 
         ProcessingReport processingReport = ocdsValidatorService.validate(request);
-        if (!processingReport.isSuccess()) {
-            System.out.println(processingReport);
-        }
+
+        System.out.println(ocdsValidatorService.processingReportToJsonText(
+                ocdsValidatorService.validate(request), request));
 
         Assert.assertTrue(processingReport.isSuccess());
 
@@ -72,7 +73,7 @@ public class OcdsValidatorTestRelease {
     @Test
     public void testReleasePackageValidation() {
 
-        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_0,
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_3,
                new TreeSet<>(OcdsValidatorConstants.EXTENSIONS), OcdsValidatorConstants.Schemas.RELEASE_PACKAGE);
 
         request.setJson(getJsonFromResource("/release-package.json"));

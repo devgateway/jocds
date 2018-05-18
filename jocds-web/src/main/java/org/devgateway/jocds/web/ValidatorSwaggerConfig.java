@@ -36,7 +36,7 @@ public class ValidatorSwaggerConfig {
                         + "<a href='https://bintray.com/devgateway/jocds/jocds'>Download latest version from Bintray"
                         + "</a>")
                 .license("jOCDS is open-source software released under the MIT license.")
-                .version("0.2.0")
+                .version("0.3.0")
                 .contact(new Contact("Mihai Postelnicu", "http://developmentgateway.org",
                         "mpostelnicu@developmentgateway.org"))
                 .termsOfServiceUrl("http://www.developmentgateway.org/privacy-and-terms")

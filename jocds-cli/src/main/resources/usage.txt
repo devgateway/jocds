@@ -8,9 +8,10 @@ $ jocds-cli [-operation=] -schema-type= [-version=] [-extensions=] [-url=] [-fil
 -url (optional) - validate OCDS JSON from the given URL
 -file (optional) - validate OCDS JSON from the given file on the file system
 -extensions (optional) - comma separated core extension names (to display them use -operation=show-builtin-extensions) , or external extensions as URLs
+-verbosity - the verbosity level. warning prints errors and warnings. error just print validation errors. The default is error. Accepted values: warning, error.
 
 Examples:
 
-java -jar jocds-cli-0.2.2.jar -operation=validate -schema-type=release-package -url=https://raw.githubusercontent.com/open-contracting/sample-data/master/fictional-example/1.1/ocds-213czf-000-00001-02-tender.json
-java -jar jocds-cli-0.2.2.jar -operation=show-supported-ocds -schema-type=release-package
-java -jar jocds-cli-0.2.2.jar -operation=show-builtin-extensions -schema-type=release-package
+java -jar jocds-cli-0.3.0.jar -verbosity=error -operation=validate -schema-type=release-package -url=https://raw.githubusercontent.com/open-contracting/sample-data/master/fictional-example/1.1/ocds-213czf-000-00001-02-tender.json
+java -jar jocds-cli-0.3.0.jar -operation=show-supported-ocds -schema-type=release-package
+java -jar jocds-cli-0.3.0.jar -operation=show-builtin-extensions -schema-type=release-package

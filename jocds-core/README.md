@@ -32,7 +32,7 @@ incoming json data (see jocds-web project).
 - can be started from the command line and used as a command tool to validate OCDS
 files and URLs.
 - works in offline mode with all OCDS versions including the minor and patch versions.
-Supported formats include 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1
+Supported formats include 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, 1.1.2, 1.1.3
 - supports in offline mode all OCDS core extensions
 - supports any other kind of extension that can be given as a URL
 - perfoms extension compatiblity check, verifying if an extension is compliant or

@@ -5,11 +5,13 @@
 
 package org.devgateway.jocds;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.annotations.ApiModelProperty;
+
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Pattern;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import javax.validation.constraints.Pattern;
-import org.hibernate.validator.constraints.NotEmpty;
 
 /**
  * Created by mpostelnicu on 7/5/17.
@@ -33,6 +35,7 @@ public class OcdsValidatorRequest {
         this.extensions = request.getExtensions();
         this.schemaType = request.getSchemaType();
         this.operation = request.getOperation();
+        this.verbosity = request.getVerbosity();
     }
 
     public OcdsValidatorRequest(String version, SortedSet<String> extensions, String schemaType) {
@@ -46,8 +49,9 @@ public class OcdsValidatorRequest {
      *
      * @return
      */
+    @JsonIgnore
     public String getKey() {
-        return schemaType + "-" + version + "-" + extensions;
+        return schemaType + "-" + version + "-" + extensions + "-" + verbosity;
     }
 
     @ApiModelProperty("This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
@@ -69,10 +73,18 @@ public class OcdsValidatorRequest {
 
     @NotEmpty(message = "Please provide schemaType!")
     @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
-            + "and release-package")
+            + "and release-package", required = true)
     @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
             + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)
     private String schemaType;
+
+    @ApiModelProperty(value = "Set the verbosity level of output. Default is 'error' but you can set this to "
+            + "'warning'. On 'warning', the validator will print warning output for elements that are not part of the "
+            + "schema or meta-schema, OCDS deprecated fields, etc. On 'error' it will only print validation"
+            + " errors.")
+
+    @Pattern(regexp = OcdsValidatorConstants.LogLevel.WARNING + "|" + OcdsValidatorConstants.LogLevel.ERROR)
+    private String verbosity = OcdsValidatorConstants.LogLevel.ERROR;
 
     public String getVersion() {
         return version;
@@ -90,12 +102,19 @@ public class OcdsValidatorRequest {
         this.extensions = extensions;
     }
 
-
     public String getSchemaType() {
         return schemaType;
     }
 
     public void setSchemaType(String schemaType) {
         this.schemaType = schemaType;
+    }
+
+    public String getVerbosity() {
+        return verbosity;
+    }
+
+    public void setVerbosity(String verbosity) {
+        this.verbosity = verbosity;
     }
 }

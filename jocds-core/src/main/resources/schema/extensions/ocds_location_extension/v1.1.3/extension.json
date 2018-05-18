@@ -1,0 +1,15 @@
+{
+  "name": {
+    "en": "Location"
+  },
+  "description": {
+    "en": "Communicates the location of proposed or executed contract delivery."
+  },
+  "documentationUrl": {
+    "en": "https://github.com/open-contracting/ocds_location_extension"
+  },
+  "codelists": [
+    "locationGazetteers.csv",
+    "geometryType.csv"
+  ]
+}

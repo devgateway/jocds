@@ -23,12 +23,28 @@ public final class OcdsValidatorConstants {
         public static final String OCDS_1_0_0 = "1.0.0";
         public static final String OCDS_1_0_1 = "1.0.1";
         public static final String OCDS_1_0_2 = "1.0.2";
+        public static final String OCDS_1_0_3 = "1.0.3";
         public static final String OCDS_1_1_0 = "1.1.0";
         public static final String OCDS_1_1_1 = "1.1.1";
+        public static final String OCDS_1_1_2 = "1.1.2";
+        public static final String OCDS_1_1_3 = "1.1.3";
 
-        public static final String[] ALL = {OCDS_1_0_0, OCDS_1_0_1, OCDS_1_0_2, OCDS_1_1_0,
-        OCDS_1_1_1};
+        public static final String[] ALL = {OCDS_1_0_0, OCDS_1_0_1, OCDS_1_0_2, OCDS_1_0_3, OCDS_1_1_0,
+                OCDS_1_1_1, OCDS_1_1_2, OCDS_1_1_3};
 
+    }
+
+    public static final class CustomSchemaKeywords {
+        /**
+         * See http://standard.open-contracting.org/latest/en/schema/deprecation/
+         */
+        public static final String DEPRECATED = "deprecated";
+        public static final String WHOLE_LIST_MERGE = "wholeListMerge";
+        public static final String OMIT_WHEN_MERGED = "omitWhenMerged";
+        public static final String MERGE_STRATEGY = "mergeStrategy";
+        public static final String VERSION_ID = "versionId";
+        public static final String OPEN_CODE_LIST = "openCodelist";
+        public static final String CODE_LIST = "codelist";
     }
 
     public static final class Schemas {
@@ -36,6 +52,12 @@ public final class OcdsValidatorConstants {
         public static final String RELEASE_PACKAGE = "release-package";
         public static final String RECORD_PACKAGE = "record-package";
         public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE};
+    }
+
+    public static final class LogLevel {
+        public static final String WARNING = "warning";
+        public static final String ERROR = "error";
+        public static final String[] ALL = {WARNING, ERROR};
     }
 
     public static final class SchemaPrefixes {

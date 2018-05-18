@@ -18,13 +18,13 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <start-class>org.devgateway.jocds.web.ValidatorWebApplication</start-class>
         <java.version>1.8</java.version>
-        <swagger.version>2.7.0</swagger.version>
+        <swagger.version>2.8.0</swagger.version>
     </properties>
 
     <parent>
         <groupId>org.devgateway.jocds</groupId>
         <artifactId>jocds</artifactId>
-        <version>0.2.3-SNAPSHOT</version>
+        <version>0.3.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>org.devgateway.jocds</groupId>
             <artifactId>jocds-core</artifactId>
-            <version>0.2.3-SNAPSHOT</version>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
 
         <dependency>

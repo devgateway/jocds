@@ -40,7 +40,7 @@ public class ValidatorSwaggerConfig {
                 .contact(new Contact("Mihai Postelnicu", "http://developmentgateway.org",
                         "mpostelnicu@developmentgateway.org"))
                 .termsOfServiceUrl("http://www.developmentgateway.org/privacy-and-terms")
-                .licenseUrl("https://opensource.org/licenses/MIT").version("0.2").build();
+                .licenseUrl("https://opensource.org/licenses/MIT").build();
     }
 
 }

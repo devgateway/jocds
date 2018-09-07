@@ -51,3 +51,14 @@ Complete REST API documentation can be find on the [REST API module page](https:
 
 The command line interface version of the tool has a separate [CLI module page](https://github.com/devgateway/jocds/tree/master/jocds-cli)
 
+
+## Thanks!
+
+![YourKit](https://www.yourkit.com/images/yklogo.png)
+
+jOCDS uses YourKit Java Profiler for Performance Tuning.
+
+YourKit supports open source projects with its full-featured Java Profiler.
+YourKit, LLC is the creator of <a href="https://www.yourkit.com/java/profiler/index.jsp">YourKit Java Profiler</a>
+and <a href="https://www.yourkit.com/.net/profiler/index.jsp">YourKit .NET Profiler</a>,
+innovative and intelligent tools for profiling Java and .NET applications.

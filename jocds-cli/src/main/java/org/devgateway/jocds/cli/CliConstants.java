@@ -18,5 +18,6 @@ public final class CliConstants {
     public static final String PARAM_URL = "-url";
     public static final String PARAM_EXTENSIONS = "-extensions";
     public static final String PARAM_VERBOSITY = "-verbosity";
+    public static final String PARAM_TRUST_SELF_SIGNED_CERTS = "-trustSelfSignedCerts";
 
 }

@@ -61,6 +61,11 @@ public class CliRunner implements CommandLineRunner {
             request.setVerbosity(properties.getProperty(CliConstants.PARAM_VERBOSITY));
         }
 
+        if (properties.containsKey(CliConstants.PARAM_TRUST_SELF_SIGNED_CERTS)) {
+            request.setTrustSelfSignedCerts(
+                    Boolean.parseBoolean(properties.getProperty(CliConstants.PARAM_TRUST_SELF_SIGNED_CERTS)));
+        }
+
         if (properties.containsKey(CliConstants.PARAM_EXTENSIONS)) {
             String extensionsString = properties.getProperty(CliConstants.PARAM_EXTENSIONS);
             String[] extensions = extensionsString.split(",");

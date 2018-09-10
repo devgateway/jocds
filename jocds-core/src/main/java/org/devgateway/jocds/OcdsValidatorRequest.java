@@ -36,6 +36,7 @@ public class OcdsValidatorRequest {
         this.schemaType = request.getSchemaType();
         this.operation = request.getOperation();
         this.verbosity = request.getVerbosity();
+        this.trustSelfSignedCerts = request.getTrustSelfSignedCerts();
     }
 
     public OcdsValidatorRequest(String version, SortedSet<String> extensions, String schemaType) {
@@ -71,6 +72,9 @@ public class OcdsValidatorRequest {
             + "'show-supported-ocds' will list the supported ocds versions. show-builtin-extensions will list the "
             + "core OCDS extensions that are supported internally and in offline mode.")
     private String operation = OcdsValidatorConstants.Operations.VALIDATE;
+
+    @ApiModelProperty("Trust self signed SSL certificates. Defaults to false")
+    private boolean trustSelfSignedCerts = false;
 
     @NotEmpty(message = "Please provide schemaType!")
     @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
@@ -117,5 +121,13 @@ public class OcdsValidatorRequest {
 
     public void setVerbosity(String verbosity) {
         this.verbosity = verbosity;
+    }
+
+    public boolean getTrustSelfSignedCerts() {
+        return trustSelfSignedCerts;
+    }
+
+    public void setTrustSelfSignedCerts(boolean trustSelfSignedCerts) {
+        this.trustSelfSignedCerts = trustSelfSignedCerts;
     }
 }

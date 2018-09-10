@@ -32,6 +32,14 @@ import com.github.fge.msgsimple.source.MapMessageSource;
 import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.devgateway.jocds.jsonschema.checker.CodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.MergeStrategySyntaxChecker;
@@ -49,9 +57,13 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.InputStreamReader;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -138,13 +150,13 @@ public class OcdsValidatorService {
         for (String ext : request.getExtensions()) {
             try {
                 logger.debug("Applying schema extension " + ext);
-                JsonNode nodeMeta = getExtensionMeta(ext);
+                JsonNode nodeMeta = getExtensionMeta(request.getTrustSelfSignedCerts(), ext);
                 if (!compatibleExtension(nodeMeta, request.getVersion())) {
                     throw new RuntimeException("Cannot apply extension " + ext + " due to version incompatibilities. "
                             + "Extension meta is " + nodeMeta.toString() + " requested schema version "
                             + request.getVersion());
                 }
-                schemaResult = getExtensionReleaseJson(ext).apply(schemaResult);
+                schemaResult = getExtensionReleaseJson(request.getTrustSelfSignedCerts(), ext).apply(schemaResult);
             } catch (JsonPatchException e) {
                 throw new RuntimeException(e);
             }
@@ -153,7 +165,7 @@ public class OcdsValidatorService {
         return schemaResult;
     }
 
-    private JsonNode getExtensionMeta(String id) {
+    private JsonNode getExtensionMeta(boolean trustSelfSignedCerts, String id) {
 
         //check if preloaded as extension
         if (extensionMeta.containsKey(id)) {
@@ -161,13 +173,9 @@ public class OcdsValidatorService {
         }
 
         //attempt load via URL
-        try {
-            JsonNode jsonNode = readExtensionMeta(new URL(id));
+            JsonNode jsonNode = readExtensionMetaURL(trustSelfSignedCerts, id);
             extensionMeta.put(id, jsonNode);
             return jsonNode;
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private boolean compatibleExtension(JsonNode extensionNodeMeta, String fullVersion) {
@@ -218,24 +226,20 @@ public class OcdsValidatorService {
     }
 
 
-    private JsonMergePatch getExtensionReleaseJson(String id) {
+    private JsonMergePatch getExtensionReleaseJson(boolean trustSelfSignedCerts, String id) {
         //check if preloaded as extension
         if (extensionReleaseJson.containsKey(id)) {
             return extensionReleaseJson.get(id);
         }
 
         //attempt load via URL
-        try {
             String releaseUrl = id.replace(
                     OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
                     OcdsValidatorConstants.EXTENSION_RELEASE_JSON
             );
-            JsonMergePatch patch = readExtensionReleaseJson(new URL(releaseUrl));
+            JsonMergePatch patch = readExtensionReleaseJsonURL(trustSelfSignedCerts, releaseUrl);
             extensionReleaseJson.put(id, patch);
             return patch;
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private JsonNode readExtensionMeta(String extensionName) {
@@ -249,23 +253,19 @@ public class OcdsValidatorService {
         }
     }
 
-    private JsonNode readExtensionMeta(URL url) {
-        try {
+    private JsonNode readExtensionMetaURL(boolean trustSelfSignedCerts, String url) {
             logger.debug("Reading extension metadata from URL " + url);
-            return JsonLoader.fromURL(url);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            return getJsonNodeFromUrl(trustSelfSignedCerts, url);
     }
 
-    private JsonMergePatch readExtensionReleaseJson(URL url) {
+    private JsonMergePatch readExtensionReleaseJsonURL(boolean trustSelfSignedCerts, String url) {
         //reading meta
         try {
             logger.debug("Reading extension JSON contents for extension " + url);
-            JsonNode jsonMergePatch = JsonLoader.fromURL(url);
+            JsonNode jsonMergePatch = getJsonNodeFromUrl(trustSelfSignedCerts, url);
             JsonMergePatch patch = JsonMergePatch.fromJson(jsonMergePatch);
             return patch;
-        } catch (IOException | JsonPatchException e) {
+        } catch (JsonPatchException e) {
             throw new RuntimeException(e);
         }
     }
@@ -354,6 +354,26 @@ public class OcdsValidatorService {
         initMajorLatestFullVersion();
         initExtensions();
         initJsonSchemaFactory();
+    }
+
+    private CloseableHttpClient getHttpClient(boolean trustSelfSignedCerts) {
+        if (trustSelfSignedCerts) {
+            // use the TrustSelfSignedStrategy to allow Self Signed Certificates
+            SSLContext sslContext = null;
+            try {
+                sslContext = SSLContextBuilder
+                        .create()
+                        .loadTrustMaterial(new TrustSelfSignedStrategy())
+                        .build();
+            } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+                e.printStackTrace();
+            }
+            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
+            SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
+            return HttpClients.custom().setSSLSocketFactory(connectionFactory).build();
+        } else {
+            return HttpClients.createDefault();
+        }
     }
 
     private Keyword createDeprecatedKeyword() {
@@ -518,9 +538,12 @@ public class OcdsValidatorService {
         }
     }
 
-    private JsonNode getJsonNodeFromUrl(String url) {
+    private JsonNode getJsonNodeFromUrl(boolean trustSelfSignedCerts, String url) {
         try {
-            return JsonLoader.fromURL(new URL(url));
+            HttpGet request = new HttpGet(url);
+            request.addHeader("accept", "application/json");
+            HttpResponse response = getHttpClient(trustSelfSignedCerts).execute(request);
+            return JsonLoader.fromReader(new InputStreamReader(response.getEntity().getContent()));
         } catch (IOException e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -639,7 +662,7 @@ public class OcdsValidatorService {
     private OcdsValidatorNodeRequest convertUrlRequestToNodeRequest(OcdsValidatorUrlRequest request) {
         JsonNode node = null;
         if (!StringUtils.isEmpty(request.getUrl())) {
-            node = getJsonNodeFromUrl(request.getUrl());
+            node = getJsonNodeFromUrl(request.getTrustSelfSignedCerts(), request.getUrl());
         }
 
         return new OcdsValidatorNodeRequest(request, node);

@@ -16,7 +16,7 @@
 title: jOCDS
 email: mpostelnicu@developmentgateway.org
 description: The Java Open Contracting Standard Validator
-baseurl: "" # the subpath of your site, e.g. /blog
+baseurl: "/jocds" # the subpath of your site, e.g. /blog
 url: "https://devgateway.github.io/jocds/" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: devgateway
 github_username:  devgateway

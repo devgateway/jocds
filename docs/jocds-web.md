@@ -1,7 +1,7 @@
 ---
 layout: page
-title: jOCDS Server
-permalink: /jocds-server/
+title: Web Server
+permalink: /jocds-web/
 ---
 
 

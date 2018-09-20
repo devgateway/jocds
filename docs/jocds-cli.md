@@ -1,6 +1,6 @@
 ---
 layout: page
-title: jOCDS CLI
+title: CLI
 permalink: /jocds-cli/
 ---
 

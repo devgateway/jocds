@@ -1,7 +1,4 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
 layout: home
 ---
 
@@ -53,11 +50,11 @@ jOCDS is collection of tools that makes validation of the OCDS JSON data easy. I
 
 # jOCDS Web - REST API
 
-Complete REST API documentation can be find on the [REST API module page](https://github.com/devgateway/jocds/tree/master/jocds-web)
+Complete REST API documentation can be found on the [REST API module page](/jocds/jocds-web)
 
 # jOCDS CLI - Command Line Interface
 
-The command line interface version of the tool has a separate [CLI module page](https://github.com/devgateway/jocds/tree/master/jocds-cli)
+The command line interface version of the tool has a separate [CLI module page](/jocds/jocds-cli)
 
 
 ## Thanks!

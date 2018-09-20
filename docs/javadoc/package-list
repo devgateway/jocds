@@ -1,0 +1,7 @@
+org.devgateway.jocds
+org.devgateway.jocds.cli
+org.devgateway.jocds.jsonschema.checker
+org.devgateway.jocds.jsonschema.validator
+org.devgateway.jocds.web
+org.devgateway.jocds.web.controller
+test

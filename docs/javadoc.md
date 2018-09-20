@@ -1,5 +1,5 @@
 ---
 title: JavaDoc
 redirect_to:
-  - /javadoc/
+  - https://devgateway.github.io/jocds/javadoc/
 ---

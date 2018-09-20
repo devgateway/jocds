@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Web Server
+title: Web
 permalink: /jocds-web/
 ---
 

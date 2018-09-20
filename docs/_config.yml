@@ -20,12 +20,12 @@ baseurl: "/jocds" # the subpath of your site, e.g. /blog
 url: "https://devgateway.github.io/jocds/" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: devgateway
 github_username:  devgateway
-encoding: utf-8
 
 # Build settings
 markdown: kramdown
-remote_theme: "mmistakes/minimal-mistakes"
-
+theme: minima
+plugins:
+  - jekyll-feed
 
 # Exclude from processing.
 # The following items will not be processed, by default. Create a custom list

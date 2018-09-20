@@ -36,6 +36,8 @@ For example the following line downloads/invokes the container and runs it to va
 The Web Server docker image of jOCDS was built using `maven:3.5-jdk-8-alpine` and repackaged from `openjdk:8-jre-alpine`
 as a Docker [multi-stage build](https://docs.docker.com/develop/develop-images/multistage-build/).
 
+You may find more info about the Web build on its hub.docker.com page [available here](https://hub.docker.com/r/jocds/jocds-web/) .
+
 ### Running the Web Server image
 
 The latest version of the dockerized cli build can be fetched and run using:

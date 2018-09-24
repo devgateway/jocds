@@ -320,6 +320,10 @@ public class OcdsValidatorService {
                 OcdsValidatorConstants.Schemas.RELEASE_PACKAGE,
                 OcdsValidatorConstants.SchemaPrefixes.RELEASE_PACKAGE
         );
+        schemaNamePrefix.put(
+                OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION,
+                OcdsValidatorConstants.SchemaPrefixes.VERSIONED_RELEASE_VALIDATION
+        );
     }
 
     private void initExtensions() {
@@ -482,7 +486,9 @@ public class OcdsValidatorService {
             logger.debug("Running validation for api request for schema of type " + nodeRequest.getSchemaType()
                     + " and version " + nodeRequest.getVersion());
 
-            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE)) {
+            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE)
+                    || nodeRequest.getSchemaType().equals(
+                            OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION)) {
 
                 if (nodeRequest.getVersion() == null) {
                     throw new RuntimeException("Not allowed null version info for release validation!");

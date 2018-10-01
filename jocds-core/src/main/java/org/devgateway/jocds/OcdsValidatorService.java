@@ -497,6 +497,10 @@ public class OcdsValidatorService {
                 return validateRelease(nodeRequest);
             }
 
+            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RECORD_PACKAGE)) {
+                return validateRecordPackage(nodeRequest);
+            }
+
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)) {
                 return validateReleasePackage(nodeRequest);
             }
@@ -577,14 +581,62 @@ public class OcdsValidatorService {
         return majorMinor + "." + bugfix;
     }
 
+
+    private ProcessingReport validateEmbeddedReleases(OcdsValidatorNodeRequest nodeRequest, JsonNode releasesNode,
+                                                      String releaseType)
+            throws ProcessingException {
+        ProcessingReport returnedReport = new ListProcessingReport();
+        for (JsonNode release : releasesNode) {
+            returnedReport.mergeWith(validateEmbeddedRelease(nodeRequest,
+                    release, releaseType));
+        }
+        return returnedReport;
+    }
+
+    private ProcessingReport validateEmbeddedRelease(OcdsValidatorNodeRequest nodeRequest, JsonNode node,
+                                                     String releaseType)
+            throws ProcessingException {
+        ProcessingReport returnedReport = new ListProcessingReport();
+        OcdsValidatorNodeRequest releaseValidationRequest = new OcdsValidatorNodeRequest(nodeRequest, node);
+        releaseValidationRequest.setSchemaType(releaseType);
+        ProcessingReport report = validateRelease(releaseValidationRequest);
+        if (!report.isSuccess()) {
+            ProcessingMessage msg = new ProcessingMessage();
+            msg.setLogLevel(LogLevel.ERROR);
+            String ocid = getOcidFromRelease(node);
+            msg.setMessage("Error(s) in release with ocid=" + ((ocid == null) ? "" : " with ocid " + ocid));
+            ProcessingReport wrapperReport = new ListProcessingReport();
+            wrapperReport.error(msg);
+            wrapperReport.mergeWith(report);
+            returnedReport.mergeWith(wrapperReport);
+            return returnedReport;
+        }
+        return returnedReport;
+    }
+
+
     /**
-     * Validates a release package
+     * Applies extensions read from nodeRequest
      *
      * @param nodeRequest
-     * @return
      */
-    private ProcessingReport validateReleasePackage(OcdsValidatorNodeRequest nodeRequest) {
+    private void applyExtensions(OcdsValidatorNodeRequest nodeRequest) {
+        //get release package extensions
+        if (nodeRequest.getExtensions() == null && nodeRequest.getNode()
+                .hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+            nodeRequest.setExtensions(new TreeSet<>());
+            for (JsonNode extension : nodeRequest.getNode().get(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+                nodeRequest.getExtensions().add(extension.asText());
+            }
+        }
+    }
 
+    /**
+     * Autodetect version from package
+     *
+     * @param nodeRequest
+     */
+    private void autodetectPackageVersion(OcdsValidatorNodeRequest nodeRequest) {
         if (nodeRequest.getVersion() == null) {
             //try autodetect using version in node
             if (nodeRequest.getNode() != null
@@ -598,6 +650,17 @@ public class OcdsValidatorService {
                 throw new RuntimeException("Version schema property has to be present!");
             }
         }
+    }
+
+    /**
+     * Validates a release package
+     *
+     * @param nodeRequest
+     * @return
+     */
+    private ProcessingReport validateReleasePackage(OcdsValidatorNodeRequest nodeRequest) {
+
+        autodetectPackageVersion(nodeRequest);
 
         JsonSchema schema = getSchema(nodeRequest);
         try {
@@ -606,42 +669,52 @@ public class OcdsValidatorService {
                 return releasePackageReport;
             }
 
-            //get release package extensions
-            if (nodeRequest.getExtensions() == null && nodeRequest.getNode()
-                    .hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
-                nodeRequest.setExtensions(new TreeSet<>());
-                for (JsonNode extension : nodeRequest.getNode().get(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
-                    nodeRequest.getExtensions().add(extension.asText());
-                }
-            }
+            applyExtensions(nodeRequest);
 
             if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                int i = 0;
-                for (JsonNode release : nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                    OcdsValidatorNodeRequest releaseValidationRequest
-                            = new OcdsValidatorNodeRequest(nodeRequest, release);
-                    releaseValidationRequest.setSchemaType(OcdsValidatorConstants.Schemas.RELEASE);
-                    ProcessingReport report = validateRelease(releaseValidationRequest);
-                    if (!report.isSuccess()) {
-                        ProcessingMessage message = new ProcessingMessage();
-                        message.setLogLevel(LogLevel.ERROR);
-                        String ocid = getOcidFromRelease(release);
-                        message.setMessage("Error(s) in release #" + i++
-                                + new String((ocid == null) ? "" : " with ocid " + ocid));
-
-                        ProcessingReport wrapperReport = new ListProcessingReport();
-                        wrapperReport.error(message);
-                        wrapperReport.mergeWith(report);
-                        releasePackageReport.mergeWith(wrapperReport);
-                    } else {
-                        releasePackageReport.mergeWith(report);
-                    }
-                }
+                releasePackageReport.mergeWith(validateEmbeddedReleases(nodeRequest,
+                        nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY),
+                        OcdsValidatorConstants.Schemas.RELEASE));
             } else {
                 throw new RuntimeException("No releases were found during release package validation!");
             }
 
             return releasePackageReport;
+
+        } catch (ProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Validates a record package
+     *
+     * @param nodeRequest
+     * @return
+     */
+    private ProcessingReport validateRecordPackage(OcdsValidatorNodeRequest nodeRequest) {
+
+        autodetectPackageVersion(nodeRequest);
+
+        JsonSchema schema = getSchema(nodeRequest);
+        try {
+            ProcessingReport recordPackageReport = schema.validate(nodeRequest.getNode());
+            if (!recordPackageReport.isSuccess()) {
+                return recordPackageReport;
+            }
+
+            applyExtensions(nodeRequest);
+
+            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
+                recordPackageReport.mergeWith(validateEmbeddedReleases(nodeRequest,
+                        nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY),
+                        OcdsValidatorConstants.Schemas.RELEASE));
+            } else {
+                throw new RuntimeException("No releases were found during release package validation!");
+            }
+
+            return recordPackageReport;
 
         } catch (ProcessingException e) {
             e.printStackTrace();

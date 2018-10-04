@@ -173,9 +173,9 @@ public class OcdsValidatorService {
         }
 
         //attempt load via URL
-            JsonNode jsonNode = readExtensionMetaURL(trustSelfSignedCerts, id);
-            extensionMeta.put(id, jsonNode);
-            return jsonNode;
+        JsonNode jsonNode = readExtensionMetaURL(trustSelfSignedCerts, id);
+        extensionMeta.put(id, jsonNode);
+        return jsonNode;
     }
 
     private boolean compatibleExtension(JsonNode extensionNodeMeta, String fullVersion) {
@@ -233,13 +233,13 @@ public class OcdsValidatorService {
         }
 
         //attempt load via URL
-            String releaseUrl = id.replace(
-                    OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
-                    OcdsValidatorConstants.EXTENSION_RELEASE_JSON
-            );
-            JsonMergePatch patch = readExtensionReleaseJsonURL(trustSelfSignedCerts, releaseUrl);
-            extensionReleaseJson.put(id, patch);
-            return patch;
+        String releaseUrl = id.replace(
+                OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
+                OcdsValidatorConstants.EXTENSION_RELEASE_JSON
+        );
+        JsonMergePatch patch = readExtensionReleaseJsonURL(trustSelfSignedCerts, releaseUrl);
+        extensionReleaseJson.put(id, patch);
+        return patch;
     }
 
     private JsonNode readExtensionMeta(String extensionName) {
@@ -254,8 +254,8 @@ public class OcdsValidatorService {
     }
 
     private JsonNode readExtensionMetaURL(boolean trustSelfSignedCerts, String url) {
-            logger.debug("Reading extension metadata from URL " + url);
-            return getJsonNodeFromUrl(trustSelfSignedCerts, url);
+        logger.debug("Reading extension metadata from URL " + url);
+        return getJsonNodeFromUrl(trustSelfSignedCerts, url);
     }
 
     private JsonMergePatch readExtensionReleaseJsonURL(boolean trustSelfSignedCerts, String url) {
@@ -488,7 +488,7 @@ public class OcdsValidatorService {
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE)
                     || nodeRequest.getSchemaType().equals(
-                            OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION)) {
+                    OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION)) {
 
                 if (nodeRequest.getVersion() == null) {
                     throw new RuntimeException("Not allowed null version info for release validation!");
@@ -588,7 +588,8 @@ public class OcdsValidatorService {
         ProcessingReport returnedReport = new ListProcessingReport();
         for (JsonNode release : releasesNode) {
             returnedReport.mergeWith(validateEmbeddedRelease(nodeRequest,
-                    release, releaseType));
+                    release, releaseType
+            ));
         }
         return returnedReport;
     }
@@ -672,9 +673,11 @@ public class OcdsValidatorService {
             applyExtensions(nodeRequest);
 
             if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                releasePackageReport.mergeWith(validateEmbeddedReleases(nodeRequest,
+                releasePackageReport.mergeWith(validateEmbeddedReleases(
+                        nodeRequest,
                         nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY),
-                        OcdsValidatorConstants.Schemas.RELEASE));
+                        OcdsValidatorConstants.Schemas.RELEASE
+                ));
             } else {
                 throw new RuntimeException("No releases were found during release package validation!");
             }
@@ -699,19 +702,38 @@ public class OcdsValidatorService {
 
         JsonSchema schema = getSchema(nodeRequest);
         try {
+
+            //do a general non extension validation of entire json
             ProcessingReport recordPackageReport = schema.validate(nodeRequest.getNode());
             if (!recordPackageReport.isSuccess()) {
                 return recordPackageReport;
             }
 
+            //validate each release separately, after applying extensions
             applyExtensions(nodeRequest);
 
-            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                recordPackageReport.mergeWith(validateEmbeddedReleases(nodeRequest,
-                        nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY),
-                        OcdsValidatorConstants.Schemas.RELEASE));
-            } else {
-                throw new RuntimeException("No releases were found during release package validation!");
+            //get all records
+            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RECORDS_PROPERTY)) {
+                for (JsonNode record : nodeRequest.getNode().get(OcdsValidatorConstants.RECORDS_PROPERTY)) {
+
+                    //validate compiled release
+                    if (record.hasNonNull(OcdsValidatorConstants.COMPILED_RELEASE_PROPERTY)) {
+                        recordPackageReport.mergeWith(validateEmbeddedRelease(
+                                nodeRequest,
+                                record.get(OcdsValidatorConstants.COMPILED_RELEASE_PROPERTY),
+                                OcdsValidatorConstants.Schemas.RELEASE
+                        ));
+                    }
+
+                    //validate versioned release
+                    if (record.hasNonNull(OcdsValidatorConstants.VERSIONED_RELEASE_PROPERTY)) {
+                        recordPackageReport.mergeWith(validateEmbeddedRelease(
+                                nodeRequest,
+                                record.get(OcdsValidatorConstants.VERSIONED_RELEASE_PROPERTY),
+                                OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION
+                        ));
+                    }
+                }
             }
 
             return recordPackageReport;

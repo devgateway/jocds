@@ -88,6 +88,22 @@ public class TestOcdsValidatorRelease {
     }
 
     @Test
+    public void testRecordPackageValidation() {
+
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(null, new TreeSet<>(),
+                OcdsValidatorConstants.Schemas.RECORD_PACKAGE);
+
+        request.setJson(getJsonFromResource("/record-package.json"));
+
+        ProcessingReport processingReport = ocdsValidatorService.validate(request);
+        if (!processingReport.isSuccess()) {
+            System.out.println(processingReport);
+        }
+
+        Assert.assertTrue(processingReport.isSuccess());
+    }
+
+    @Test
     public void testReleasePackageValidationWithVersionAutodetect() {
 
         OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(null,

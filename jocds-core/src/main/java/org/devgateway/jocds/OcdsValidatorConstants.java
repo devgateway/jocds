@@ -110,6 +110,9 @@ public final class OcdsValidatorConstants {
 
     public static final String EXTENSIONS_PROPERTY = "extensions";
     public static final String RELEASES_PROPERTY = "releases";
+    public static final String RECORDS_PROPERTY = "records";
+    public static final String COMPILED_RELEASE_PROPERTY = "compiledRelease";
+    public static final String VERSIONED_RELEASE_PROPERTY = "versionedRelease";
     public static final String OCID_PROPERTY = "ocid";
     public static final String VERSION_PROPERTY = "version";
 

@@ -474,11 +474,32 @@ public class OcdsValidatorService {
     }
 
     public ProcessingReport validate(OcdsValidatorStringRequest request) {
-        return validate(convertStringRequestToNodeRequest(request));
+        try {
+            return validate(convertStringRequestToNodeRequest(request));
+        } catch (RuntimeException e) {
+            return logErrorAsReport(request, e);
+        }
+    }
+
+    private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
+        ProcessingReport report = new ListProcessingReport();
+        try {
+            report.error(new ProcessingMessage().setMessage("Error processing request "
+                    + jacksonObjectMapper.writeValueAsString(request)));
+            report.error(new ProcessingMessage().setMessage(e.getMessage()));
+            return report;
+        } catch (ProcessingException | JsonProcessingException e1) {
+            e1.printStackTrace();
+            throw new RuntimeException(e1);
+        }
     }
 
     public ProcessingReport validate(OcdsValidatorUrlRequest request) {
-        return validate(convertUrlRequestToNodeRequest(request));
+        try {
+            return validate(convertUrlRequestToNodeRequest(request));
+        } catch (RuntimeException e) {
+            return logErrorAsReport(request, e);
+        }
     }
 
     public ProcessingReport validate(OcdsValidatorNodeRequest nodeRequest) {
@@ -494,15 +515,27 @@ public class OcdsValidatorService {
                     throw new RuntimeException("Not allowed null version info for release validation!");
                 }
 
-                return validateRelease(nodeRequest);
+                try {
+                    return validateRelease(nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
             }
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RECORD_PACKAGE)) {
-                return validateRecordPackage(nodeRequest);
+                try {
+                    return validateRecordPackage(nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
             }
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)) {
-                return validateReleasePackage(nodeRequest);
+                try {
+                    return validateReleasePackage(nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
             }
         }
 
@@ -555,7 +588,6 @@ public class OcdsValidatorService {
             HttpResponse response = getHttpClient(trustSelfSignedCerts).execute(request);
             return JsonLoader.fromReader(new InputStreamReader(response.getEntity().getContent()));
         } catch (IOException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -733,6 +765,32 @@ public class OcdsValidatorService {
                                 OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION
                         ));
                     }
+
+                    //validate releases array, this contains 'oneOf' keyword, so we need to distinguish b/w the schemas
+                    if (record.hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
+                        //decide if we are. If the first node contains the required 'url' property, this is a
+                        //Linked release case, if not it is an embedded release case
+                        boolean linkUrl = record.get(OcdsValidatorConstants.RELEASES_PROPERTY).get(0)
+                                .hasNonNull(OcdsValidatorConstants.URL_PROPERTY);
+                        if (linkUrl) {
+                            for (JsonNode r : record.get(OcdsValidatorConstants.RELEASES_PROPERTY)) {
+                                //we treat the url as a release link and invoke the validator on that url
+                                OcdsValidatorUrlRequest urlRequest = new OcdsValidatorUrlRequest(
+                                        nodeRequest,
+                                        r.get(OcdsValidatorConstants.URL_PROPERTY).asText()
+                                );
+                                urlRequest.setSchemaType(OcdsValidatorConstants.Schemas.RELEASE);
+                                recordPackageReport.mergeWith(validate(urlRequest));
+                            }
+                        } else {
+                            //we treat each entry as an embedded release
+                            recordPackageReport.mergeWith(validateEmbeddedReleases(
+                                    nodeRequest, record.get(OcdsValidatorConstants.RELEASES_PROPERTY),
+                                    OcdsValidatorConstants.Schemas.RELEASE
+                            ));
+                        }
+                    }
+
                 }
             }
 

@@ -483,7 +483,7 @@ public class OcdsValidatorService {
 
     private ProcessingReport wrapLogReportInRequestInfo(ProcessingReport report, OcdsValidatorRequest request) {
         try {
-            if(!report.isSuccess()) {
+            if (!report.isSuccess()) {
                 report.error(new ProcessingMessage().setMessage("Error(s) found while processing request "
                         + jacksonObjectMapper.writeValueAsString(request)));
             }

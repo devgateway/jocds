@@ -130,4 +130,8 @@ public class OcdsValidatorRequest {
     public void setTrustSelfSignedCerts(boolean trustSelfSignedCerts) {
         this.trustSelfSignedCerts = trustSelfSignedCerts;
     }
+
+    public boolean isTrustSelfSignedCerts() {
+        return trustSelfSignedCerts;
+    }
 }

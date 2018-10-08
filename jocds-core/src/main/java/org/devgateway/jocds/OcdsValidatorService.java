@@ -481,14 +481,26 @@ public class OcdsValidatorService {
         }
     }
 
-    private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
+    private ProcessingReport wrapLogReportInRequestInfo(ProcessingReport report, OcdsValidatorRequest request) {
+        try {
+            if(!report.isSuccess()) {
+                report.error(new ProcessingMessage().setMessage("Error(s) found while processing request "
+                        + jacksonObjectMapper.writeValueAsString(request)));
+            }
+        } catch (ProcessingException | JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        return report;
+    }
+
+        private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
         ProcessingReport report = new ListProcessingReport();
         try {
-            report.error(new ProcessingMessage().setMessage("Error processing request "
-                    + jacksonObjectMapper.writeValueAsString(request)));
+            wrapLogReportInRequestInfo(report, request);
             report.error(new ProcessingMessage().setMessage(e.getMessage()));
             return report;
-        } catch (ProcessingException | JsonProcessingException e1) {
+        } catch (ProcessingException e1) {
             e1.printStackTrace();
             throw new RuntimeException(e1);
         }
@@ -516,7 +528,7 @@ public class OcdsValidatorService {
                 }
 
                 try {
-                    return validateRelease(nodeRequest);
+                    return wrapLogReportInRequestInfo(validateRelease(nodeRequest), nodeRequest);
                 } catch (RuntimeException e) {
                     return logErrorAsReport(nodeRequest, e);
                 }
@@ -524,7 +536,7 @@ public class OcdsValidatorService {
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RECORD_PACKAGE)) {
                 try {
-                    return validateRecordPackage(nodeRequest);
+                    return wrapLogReportInRequestInfo(validateRecordPackage(nodeRequest), nodeRequest);
                 } catch (RuntimeException e) {
                     return logErrorAsReport(nodeRequest, e);
                 }
@@ -532,7 +544,7 @@ public class OcdsValidatorService {
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)) {
                 try {
-                    return validateReleasePackage(nodeRequest);
+                    return wrapLogReportInRequestInfo(validateReleasePackage(nodeRequest), nodeRequest);
                 } catch (RuntimeException e) {
                     return logErrorAsReport(nodeRequest, e);
                 }

@@ -51,7 +51,8 @@ public final class OcdsValidatorConstants {
         public static final String RELEASE = "release";
         public static final String RELEASE_PACKAGE = "release-package";
         public static final String RECORD_PACKAGE = "record-package";
-        public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE};
+        public static final String VERSIONED_RELEASE_VALIDATION = "versioned-release-validation";
+        public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE, VERSIONED_RELEASE_VALIDATION};
     }
 
     public static final class LogLevel {
@@ -64,6 +65,8 @@ public final class OcdsValidatorConstants {
         public static final String RELEASE = "/schema/release/release-schema-";
         public static final String RELEASE_PACKAGE = "/schema/release-package/release-package-schema-";
         public static final String RECORD_PACKAGE = "/schema/record-package/record-package-schema-";
+        public static final String VERSIONED_RELEASE_VALIDATION = "/schema/versioned-release-validation/"
+                + "versioned-release-validation-schema-";
     }
 
     public static final String SCHEMA_POSTFIX = ".json";
@@ -107,6 +110,10 @@ public final class OcdsValidatorConstants {
 
     public static final String EXTENSIONS_PROPERTY = "extensions";
     public static final String RELEASES_PROPERTY = "releases";
+    public static final String RECORDS_PROPERTY = "records";
+    public static final String URL_PROPERTY = "url";
+    public static final String COMPILED_RELEASE_PROPERTY = "compiledRelease";
+    public static final String VERSIONED_RELEASE_PROPERTY = "versionedRelease";
     public static final String OCID_PROPERTY = "ocid";
     public static final String VERSION_PROPERTY = "version";
 

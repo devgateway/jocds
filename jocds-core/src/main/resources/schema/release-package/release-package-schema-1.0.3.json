@@ -25,7 +25,7 @@
             "type": "array",
             "minItems": 1,
             "items": {
-                "$ref": "http://standard.open-contracting.org/schema/1__0__3/release-schema.json"
+                "$ref": "resource:/schema/release/release-schema-1.0.3.json"
             },
             "uniqueItems": true
         },

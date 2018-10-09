@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017. Development Gateway and contributors. All rights reserved.
+ * Copyright (c) 2018. Development Gateway and contributors. All rights reserved.
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
@@ -12,20 +12,20 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.keyword.validator.AbstractKeywordValidator;
 import com.github.fge.jsonschema.processors.data.FullData;
 import com.github.fge.msgsimple.bundle.MessageBundle;
+import org.devgateway.jocds.OcdsValidatorService;
 
-/**
- * This adds functionality for "deprecated" keyword.
- * http://standard.open-contracting.org/latest/en/schema/deprecation/
- * It will print warning messages when deprecated elements are found
- */
-public final class DeprecatedValidator
-        extends AbstractKeywordValidator {
+public final class CodelistValidator
+        extends AbstractKeywordValidator implements KeywordValidatorWithService {
 
-    private final JsonNode deprecated;
+    private final JsonNode codelist;
+    private final JsonNode openCodelist;
+    private OcdsValidatorService service;
 
-    public DeprecatedValidator(final JsonNode digest) {
-        super("deprecated");
-        deprecated = digest.get(keyword);
+    public CodelistValidator(final JsonNode digest, OcdsValidatorService service) {
+        super("codelist");
+        this.service = service;
+        codelist = digest.get(keyword);
+        openCodelist = digest.get("openCodelist");
     }
 
     @Override
@@ -34,16 +34,12 @@ public final class DeprecatedValidator
                          final FullData data)
             throws ProcessingException {
 
-        if (deprecated == null) {
+        if (codelist == null) {
             return;
         }
 
-        //   System.out.println(data.getInstance().getNode() + " is deprecated " + deprecated);
+        System.out.println(data.getInstance().getNode());
 
-        report.warn(newMsg(data, bundle,
-                "warn.jocds.deprecatedValidator"
-        )
-                .putArgument("deprecated", deprecated).putArgument("data", data.getInstance().getNode()));
     }
 
     @Override
@@ -51,4 +47,8 @@ public final class DeprecatedValidator
         return keyword + ": ";
     }
 
+    @Override
+    public OcdsValidatorService getService() {
+        return service;
+    }
 }

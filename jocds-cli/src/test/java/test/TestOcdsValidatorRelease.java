@@ -76,6 +76,8 @@ public class TestOcdsValidatorRelease {
         OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(OcdsValidatorConstants.Versions.OCDS_1_1_3,
                new TreeSet<>(OcdsValidatorConstants.EXTENSIONS), OcdsValidatorConstants.Schemas.RELEASE_PACKAGE);
 
+        request.setVerbosity(OcdsValidatorConstants.LogLevel.WARNING);
+
         request.setJson(getJsonFromResource("/release-package.json"));
 
         ProcessingReport processingReport = ocdsValidatorService.validate(request);

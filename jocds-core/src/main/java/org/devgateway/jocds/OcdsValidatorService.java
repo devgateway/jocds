@@ -32,6 +32,8 @@ import com.github.fge.msgsimple.source.MapMessageSource;
 import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
@@ -47,10 +49,14 @@ import org.devgateway.jocds.jsonschema.checker.OmitWhenMergedSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.OpenCodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.VersionIdSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.WholeListMergeSyntaxChecker;
+import org.devgateway.jocds.jsonschema.validator.CodelistValidator;
 import org.devgateway.jocds.jsonschema.validator.DeprecatedValidator;
+import org.devgateway.jocds.jsonschema.validator.factory.ReflectionKeywordValidationFactoryWithService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
@@ -65,8 +71,10 @@ import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -86,6 +94,8 @@ public class OcdsValidatorService {
     private Map<String, JsonMergePatch> extensionReleaseJson = new ConcurrentHashMap<>();
 
     private Map<String, Integer> majorLatestFullVersion = new ConcurrentHashMap<>();
+
+    private Map<String, Set<String>> codeLists = new ConcurrentHashMap<>();
 
 
     @Autowired
@@ -335,6 +345,26 @@ public class OcdsValidatorService {
         });
     }
 
+    private void initCodelists() {
+        logger.debug("Preload codelists");
+        PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+        try {
+            Resource[] resources = resourcePatternResolver.getResources("/schema/codelists/*.csv");
+            for (Resource resource : resources) {
+                CSVParser parser = new CSVParser(new InputStreamReader(resource.getInputStream()),
+                        CSVFormat.DEFAULT.withHeader());
+                Integer codeIdx = parser.getHeaderMap().get("Code");
+                codeLists.put(resource.getFilename(),
+                        parser.getRecords().stream().map(r -> r.get(codeIdx)).collect(Collectors.toSet()));
+                parser.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
     private void initMajorLatestFullVersion() {
 
         for (int i = 0; i < OcdsValidatorConstants.Versions.ALL.length; i++) {
@@ -357,6 +387,7 @@ public class OcdsValidatorService {
         initSchemaNamePrefix();
         initMajorLatestFullVersion();
         initExtensions();
+        initCodelists();
         initJsonSchemaFactory();
     }
 
@@ -423,6 +454,12 @@ public class OcdsValidatorService {
     private Keyword codelistKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST)
                 .withSyntaxChecker(CodelistSyntaxChecker.getInstance())
+                .withIdentityDigester(NodeType.ARRAY, NodeType.OBJECT)
+                //.withValidatorClass(CodelistValidator.class)
+                .withValidatorFactory(
+                        new ReflectionKeywordValidationFactoryWithService(
+                                OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST,
+                                CodelistValidator.class, this))
                 .freeze();
     }
 
@@ -494,7 +531,7 @@ public class OcdsValidatorService {
         return report;
     }
 
-        private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
+    private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
         ProcessingReport report = new ListProcessingReport();
         try {
             wrapLogReportInRequestInfo(report, request);

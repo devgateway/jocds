@@ -175,6 +175,10 @@ public class OcdsValidatorService {
         return schemaResult;
     }
 
+    public Map<String, Set<String>> getCodeLists() {
+        return codeLists;
+    }
+
     private JsonNode getExtensionMeta(boolean trustSelfSignedCerts, String id) {
 
         //check if preloaded as extension
@@ -455,7 +459,6 @@ public class OcdsValidatorService {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST)
                 .withSyntaxChecker(CodelistSyntaxChecker.getInstance())
                 .withIdentityDigester(NodeType.ARRAY, NodeType.OBJECT)
-                //.withValidatorClass(CodelistValidator.class)
                 .withValidatorFactory(
                         new ReflectionKeywordValidationFactoryWithService(
                                 OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST,
@@ -502,8 +505,13 @@ public class OcdsValidatorService {
                 + "or codelists. Before a field or codelist value is removed, "
                 + "it will be first marked as deprecated in a major or minor release (e.g. in 1.1), and removal will "
                 + "only take place, subject to the governance process, in the next major version (e.g. 2.0).";
+
+        final String codeListKey = "warn.jocds.codelistValidator";
+        final String codeListValue = "Open codelist has values that are not defined within the standard. Make sure you"
+                + "define and document their rationale!";
+
         final MessageSource source = MapMessageSource.newBuilder()
-                .put(key, value).build();
+                .put(key, value).put(codeListKey, codeListValue).build();
         final MessageBundle bundle
                 = MessageBundles.getBundle(JsonSchemaValidationBundle.class)
                 .thaw().appendSource(source).freeze();

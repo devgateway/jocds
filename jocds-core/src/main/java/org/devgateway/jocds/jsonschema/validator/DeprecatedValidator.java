@@ -38,12 +38,9 @@ public final class DeprecatedValidator
             return;
         }
 
-        //   System.out.println(data.getInstance().getNode() + " is deprecated " + deprecated);
-
         report.warn(newMsg(data, bundle,
                 "warn.jocds.deprecatedValidator"
-        )
-                .putArgument("deprecated", deprecated).putArgument("data", data.getInstance().getNode()));
+        ).putArgument("deprecated", deprecated).putArgument("data", data.getInstance().getNode()));
     }
 
     @Override

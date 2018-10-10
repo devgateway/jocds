@@ -17,8 +17,8 @@ import org.devgateway.jocds.OcdsValidatorService;
 public final class CodelistValidator
         extends AbstractKeywordValidator implements KeywordValidatorWithService {
 
-    private final JsonNode codelist;
-    private final JsonNode openCodelist;
+    private JsonNode codelist;
+    private JsonNode openCodelist;
     private OcdsValidatorService service;
 
     public CodelistValidator(final JsonNode digest, OcdsValidatorService service) {
@@ -31,15 +31,28 @@ public final class CodelistValidator
     @Override
     public void validate(final Processor<FullData, FullData> processor,
                          final ProcessingReport report, final MessageBundle bundle,
-                         final FullData data)
-            throws ProcessingException {
+                         final FullData data) throws ProcessingException {
 
-        if (codelist == null) {
+        if (codelist == null || !openCodelist.asBoolean()) {
             return;
         }
 
-        System.out.println(data.getInstance().getNode());
+        if (data.getInstance().getNode().isArray()) {
+            data.getInstance().getNode().forEach(v -> warnOpenCodelistValue(v.asText(), report, data, bundle));
+        } else {
+            warnOpenCodelistValue(data.getInstance().getNode().asText(), report, data, bundle);
+        }
+    }
 
+    private void warnOpenCodelistValue(String value, ProcessingReport report, FullData data, MessageBundle bundle) {
+        if (value != null && !service.getCodeLists().get(codelist.asText()).contains(value)) {
+            try {
+                report.warn(newMsg(data, bundle, "warn.jocds.codelistValidator").putArgument("fieldValue", value));
+            } catch (ProcessingException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     @Override

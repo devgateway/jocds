@@ -3,7 +3,7 @@ Usage:
 $ jocds-cli [-operation=] -schema-type= [-version=] [-extensions=] [-url=] [-file=]
 
 -operation (optional) - the operation to perform. The default is validate. Accepted values: validate, show-supported-ocds, show-builtin-extensions
--schema-type - the input schema type. Accepted values: release, release-package
+-schema-type - the input schema type. Accepted values: release, release-package, record-package
 -version (optional) - the OCDS version to validate against. Can be autodetected for release-package schema-type.
 -url (optional) - validate OCDS JSON from the given URL
 -file (optional) - validate OCDS JSON from the given file on the file system

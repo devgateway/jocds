@@ -12,6 +12,7 @@ import com.github.fge.jsonschema.core.report.ProcessingReport;
 import com.github.fge.jsonschema.keyword.validator.AbstractKeywordValidator;
 import com.github.fge.jsonschema.processors.data.FullData;
 import com.github.fge.msgsimple.bundle.MessageBundle;
+import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorService;
 
 public final class CodelistValidator
@@ -22,10 +23,10 @@ public final class CodelistValidator
     private OcdsValidatorService service;
 
     public CodelistValidator(final JsonNode digest, OcdsValidatorService service) {
-        super("codelist");
+        super(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST);
         this.service = service;
         codelist = digest.get(keyword);
-        openCodelist = digest.get("openCodelist");
+        openCodelist = digest.get(OcdsValidatorConstants.CustomSchemaKeywords.OPEN_CODE_LIST);
     }
 
     @Override

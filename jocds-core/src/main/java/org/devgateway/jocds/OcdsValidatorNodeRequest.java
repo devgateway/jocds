@@ -5,9 +5,10 @@
 
 package org.devgateway.jocds;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.annotations.ApiModelProperty;
+import org.devgateway.jocds.jsonschema.Views;
 
 import java.util.TreeSet;
 
@@ -17,7 +18,7 @@ import java.util.TreeSet;
 public class OcdsValidatorNodeRequest extends OcdsValidatorRequest {
 
     @ApiModelProperty(value = "The json to validate against OCDS schema")
-    @JsonIgnore
+    @JsonView(Views.Public.class)
     private JsonNode node;
 
     public OcdsValidatorNodeRequest(String version, TreeSet<String> extensions, String schemaType) {

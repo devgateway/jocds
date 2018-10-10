@@ -78,9 +78,9 @@ public class OcdsValidatorRequest {
 
     @NotEmpty(message = "Please provide schemaType!")
     @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
-            + "and release-package", required = true)
+            + ", release-package, record-package", required = true)
     @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
-            + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)
+            + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE + "|" + OcdsValidatorConstants.Schemas.RECORD_PACKAGE)
     private String schemaType;
 
     @ApiModelProperty(value = "Set the verbosity level of output. Default is 'error' but you can set this to "

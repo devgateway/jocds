@@ -84,7 +84,6 @@ public class TestOcdsValidatorRelease {
         }
 
         Assert.assertTrue(processingReport.isSuccess());
-
     }
 
     @Test

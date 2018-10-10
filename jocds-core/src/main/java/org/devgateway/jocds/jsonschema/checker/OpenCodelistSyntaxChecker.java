@@ -34,6 +34,5 @@ public final class OpenCodelistSyntaxChecker extends AbstractSyntaxChecker {
                               final MessageBundle bundle, final ProcessingReport report,
                               final SchemaTree tree)
             throws ProcessingException {
-
     }
 }

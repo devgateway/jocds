@@ -42,6 +42,7 @@ import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
+import org.devgateway.jocds.jsonschema.Views;
 import org.devgateway.jocds.jsonschema.checker.CodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.MergeStrategySyntaxChecker;
@@ -530,7 +531,7 @@ public class OcdsValidatorService {
         try {
             if (!report.isSuccess()) {
                 report.error(new ProcessingMessage().setMessage("Error(s) found while processing request "
-                        + jacksonObjectMapper.writeValueAsString(request)));
+                        + jacksonObjectMapper.writerWithView(Views.Internal.class).writeValueAsString(request)));
             }
         } catch (ProcessingException | JsonProcessingException e) {
             e.printStackTrace();

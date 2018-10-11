@@ -14,6 +14,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 /**
+ * The request object that is used throughout the validator. This is the base class for all request subclasses.
+ *
  * Created by mpostelnicu on 7/5/17.
  */
 public class OcdsValidatorRequest {
@@ -59,10 +61,19 @@ public class OcdsValidatorRequest {
     @ApiModelProperty("This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
             + " autodetection. This is helpful to test against another OCDS schema besides the one specified in "
             + "the incoming JSON.")
+    /**
+     * This is the version of OCDS schema to validate against. Leaving this empty will enable schema
+     * autodetection. This is helpful to test against another OCDS schema besides the one specified in
+     * the incoming JSON.
+     */
     private String version;
 
     @ApiModelProperty("You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are "
             + " supported, in offline mode, as well as any other OCDS extension given by URL")
+    /**
+      You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are
+      supported, in offline mode, as well as any other OCDS extension given by URL
+     */
     private SortedSet<String> extensions = new TreeSet<>();
 
     @Pattern(regexp = OcdsValidatorConstants.Operations.VALIDATE + "|"
@@ -71,9 +82,17 @@ public class OcdsValidatorRequest {
     @ApiModelProperty("Provides the operation that needs to be performed. The default is 'validate'."
             + "'show-supported-ocds' will list the supported ocds versions. show-builtin-extensions will list the "
             + "core OCDS extensions that are supported internally and in offline mode.")
+    /**
+     * Provides the operation that needs to be performed. The default is 'validate'.
+     * 'show-supported-ocds' will list the supported ocds versions. show-builtin-extensions will list the
+     * core OCDS extensions that are supported internally and in offline mode.
+     */
     private String operation = OcdsValidatorConstants.Operations.VALIDATE;
 
     @ApiModelProperty("Trust self signed SSL certificates. Defaults to false")
+    /**
+     * Trust self signed SSL certificates. Defaults to false
+     */
     private boolean trustSelfSignedCerts = false;
 
     @NotEmpty(message = "Please provide schemaType!")
@@ -81,6 +100,10 @@ public class OcdsValidatorRequest {
             + ", release-package, record-package", required = true)
     @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
             + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE + "|" + OcdsValidatorConstants.Schemas.RECORD_PACKAGE)
+    /**
+     * This is the schema type of the input JSON. Currently supported values are 'release', release-package,
+     * record-package
+     */
     private String schemaType;
 
     @ApiModelProperty(value = "Set the verbosity level of output. Default is 'error' but you can set this to "
@@ -89,6 +112,11 @@ public class OcdsValidatorRequest {
             + " errors.")
 
     @Pattern(regexp = OcdsValidatorConstants.LogLevel.WARNING + "|" + OcdsValidatorConstants.LogLevel.ERROR)
+    /**
+     * Set the verbosity level of output. Default is 'error' but you can set this to 'warning'. On 'warning', the
+     * validator will print warning output for elements that are not part of the
+     * schema or meta-schema, OCDS deprecated fields, etc. On 'error' it will only print validation errors.
+     */
     private String verbosity = OcdsValidatorConstants.LogLevel.ERROR;
 
     public String getVersion() {

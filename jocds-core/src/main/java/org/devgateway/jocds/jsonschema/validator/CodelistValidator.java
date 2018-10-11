@@ -15,6 +15,9 @@ import com.github.fge.msgsimple.bundle.MessageBundle;
 import org.devgateway.jocds.OcdsValidatorConstants;
 import org.devgateway.jocds.OcdsValidatorService;
 
+/**
+ * This defines the csv file that holds the codelists defined by the standard.
+ */
 public final class CodelistValidator
         extends AbstractKeywordValidator implements KeywordValidatorWithService {
 

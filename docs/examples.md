@@ -52,7 +52,7 @@ docker run jocds/jocds-cli:latest -verbosity=error -operation=validate -schema-t
 
 ```
 $docker run jocds/jocds-cli:latest -verbosity=error -operation=validate -schema-type=release-package -url=https://birms.bandung.go.id/beta/api/package/ocds-afzrfb-s-2016-3662192 -trustSelfSignedCerts=true
-jocds : The Java Open Contracting Data Standard Validator 0.3.1 : Copyright (c) 2018 Development Gateway, Inc
+jocds : The Java Open Contracting Data Standard Validator 0.4.0 : Copyright (c) 2018 Development Gateway, Inc
 jocds invoked with parameters: {-url=https://birms.bandung.go.id/beta/api/package/ocds-afzrfb-s-2016-3662192, -verbosity=error, -schema-type=release-package, -operation=validate, -trustSelfSignedCerts=true}
 
 "OK"
@@ -118,7 +118,7 @@ So our jocds supports the latest 1.1.3 OCDS release. Let's use that to validate 
 ```
 docker run jocds/jocds-cli:latest -verbosity=error -operation=validate -schema-type=release -url=https://birms.bandung.go.id/beta/api/newcontract/ocds-afzrfb-s-2016-3662192 -trustSelfSignedCerts=true -version=1.1.3
 
-jocds : The Java Open Contracting Data Standard Validator 0.3.1 : Copyright (c) 2018 Development Gateway, Inc
+jocds : The Java Open Contracting Data Standard Validator 0.4.0 : Copyright (c) 2018 Development Gateway, Inc
 jocds invoked with parameters: {-url=https://birms.bandung.go.id/beta/api/newcontract/ocds-afzrfb-s-2016-3662192, -verbosity=error, -version=1.1.3, -schema-type=release, -operation=validate, -trustSelfSignedCerts=true}
 
 "OK"

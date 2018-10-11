@@ -5,6 +5,13 @@
 
 package org.devgateway.jocds.jsonschema;
 
+import com.github.fge.jsonschema.core.report.ProcessingReport;
+import org.devgateway.jocds.OcdsValidatorRequest;
+
+/**
+ * Used to restrict export to json programattically for some internal cases
+ * @see org.devgateway.jocds.OcdsValidatorService#wrapLogReportInRequestInfo(ProcessingReport, OcdsValidatorRequest)
+ */
 public class Views {
     public static class Public {
     }

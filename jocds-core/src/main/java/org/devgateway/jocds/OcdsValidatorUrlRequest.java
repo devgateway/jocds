@@ -10,6 +10,9 @@ import org.hibernate.validator.constraints.URL;
 
 import javax.validation.constraints.NotEmpty;
 
+/**
+ * Used to validate OCDS json provided by URL
+ */
 public class OcdsValidatorUrlRequest extends OcdsValidatorRequest {
 
     @NotEmpty(message = "Please provide an URL!")

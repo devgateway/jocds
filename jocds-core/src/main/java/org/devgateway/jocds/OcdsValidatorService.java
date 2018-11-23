@@ -32,6 +32,17 @@ import com.github.fge.msgsimple.source.MapMessageSource;
 import com.github.fge.msgsimple.source.MessageSource;
 import com.vdurmont.semver4j.Requirement;
 import com.vdurmont.semver4j.Semver;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.devgateway.jocds.jsonschema.Views;
 import org.devgateway.jocds.jsonschema.checker.CodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.DeprecatedSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.MergeStrategySyntaxChecker;
@@ -39,22 +50,32 @@ import org.devgateway.jocds.jsonschema.checker.OmitWhenMergedSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.OpenCodelistSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.VersionIdSyntaxChecker;
 import org.devgateway.jocds.jsonschema.checker.WholeListMergeSyntaxChecker;
+import org.devgateway.jocds.jsonschema.validator.CodelistValidator;
 import org.devgateway.jocds.jsonschema.validator.DeprecatedValidator;
+import org.devgateway.jocds.jsonschema.validator.factory.ReflectionKeywordValidationFactoryWithService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.InputStreamReader;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 
 /**
@@ -74,6 +95,8 @@ public class OcdsValidatorService {
     private Map<String, JsonMergePatch> extensionReleaseJson = new ConcurrentHashMap<>();
 
     private Map<String, Integer> majorLatestFullVersion = new ConcurrentHashMap<>();
+
+    private Map<String, Set<String>> codeLists = new ConcurrentHashMap<>();
 
 
     @Autowired
@@ -138,13 +161,13 @@ public class OcdsValidatorService {
         for (String ext : request.getExtensions()) {
             try {
                 logger.debug("Applying schema extension " + ext);
-                JsonNode nodeMeta = getExtensionMeta(ext);
+                JsonNode nodeMeta = getExtensionMeta(request.getTrustSelfSignedCerts(), ext);
                 if (!compatibleExtension(nodeMeta, request.getVersion())) {
                     throw new RuntimeException("Cannot apply extension " + ext + " due to version incompatibilities. "
                             + "Extension meta is " + nodeMeta.toString() + " requested schema version "
                             + request.getVersion());
                 }
-                schemaResult = getExtensionReleaseJson(ext).apply(schemaResult);
+                schemaResult = getExtensionReleaseJson(request.getTrustSelfSignedCerts(), ext).apply(schemaResult);
             } catch (JsonPatchException e) {
                 throw new RuntimeException(e);
             }
@@ -153,7 +176,11 @@ public class OcdsValidatorService {
         return schemaResult;
     }
 
-    private JsonNode getExtensionMeta(String id) {
+    public Map<String, Set<String>> getCodeLists() {
+        return codeLists;
+    }
+
+    private JsonNode getExtensionMeta(boolean trustSelfSignedCerts, String id) {
 
         //check if preloaded as extension
         if (extensionMeta.containsKey(id)) {
@@ -161,13 +188,9 @@ public class OcdsValidatorService {
         }
 
         //attempt load via URL
-        try {
-            JsonNode jsonNode = readExtensionMeta(new URL(id));
-            extensionMeta.put(id, jsonNode);
-            return jsonNode;
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        JsonNode jsonNode = readExtensionMetaURL(trustSelfSignedCerts, id);
+        extensionMeta.put(id, jsonNode);
+        return jsonNode;
     }
 
     private boolean compatibleExtension(JsonNode extensionNodeMeta, String fullVersion) {
@@ -218,26 +241,36 @@ public class OcdsValidatorService {
     }
 
 
-    private JsonMergePatch getExtensionReleaseJson(String id) {
+    /**
+     * If the name is given, the extension is immediately returned from the internal extension list.
+     * If the URL is provided, the extension is fetched from the address , cached and returned
+     *
+     * @param trustSelfSignedCerts trust SSL certificates that are self signed
+     * @param id the extension name or URL.
+
+     * @return the {@link JsonMergePatch} with the extension
+     */
+    private JsonMergePatch getExtensionReleaseJson(boolean trustSelfSignedCerts, String id) {
         //check if preloaded as extension
         if (extensionReleaseJson.containsKey(id)) {
             return extensionReleaseJson.get(id);
         }
 
         //attempt load via URL
-        try {
-            String releaseUrl = id.replace(
-                    OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
-                    OcdsValidatorConstants.EXTENSION_RELEASE_JSON
-            );
-            JsonMergePatch patch = readExtensionReleaseJson(new URL(releaseUrl));
-            extensionReleaseJson.put(id, patch);
-            return patch;
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
+        String releaseUrl = id.replace(
+                OcdsValidatorConstants.REMOTE_EXTENSION_META_POSTFIX,
+                OcdsValidatorConstants.EXTENSION_RELEASE_JSON
+        );
+        JsonMergePatch patch = readExtensionReleaseJsonURL(trustSelfSignedCerts, releaseUrl);
+        extensionReleaseJson.put(id, patch);
+        return patch;
     }
 
+    /**
+     * Reads the extension metadata, available inside extension.json file
+     * @param extensionName the extension name
+     * @return the contents of extension.json
+     */
     private JsonNode readExtensionMeta(String extensionName) {
         //reading meta
         try {
@@ -249,28 +282,43 @@ public class OcdsValidatorService {
         }
     }
 
-    private JsonNode readExtensionMeta(URL url) {
-        try {
-            logger.debug("Reading extension metadata from URL " + url);
-            return JsonLoader.fromURL(url);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    /**
+     * Reads the extension metadata from the given URL
+     * @see #readExtensionMeta(String)
+     * @param trustSelfSignedCerts
+     * @param url
+     * @return
+     */
+    private JsonNode readExtensionMetaURL(boolean trustSelfSignedCerts, String url) {
+        logger.debug("Reading extension metadata from URL " + url);
+        return getJsonNodeFromUrl(trustSelfSignedCerts, url);
     }
 
-    private JsonMergePatch readExtensionReleaseJson(URL url) {
+    /**
+     * Reads the extension.json from URL
+     * @see #readExtensionMeta(String)
+     * @param trustSelfSignedCerts
+     * @param url
+     * @return
+     */
+    private JsonMergePatch readExtensionReleaseJsonURL(boolean trustSelfSignedCerts, String url) {
         //reading meta
         try {
             logger.debug("Reading extension JSON contents for extension " + url);
-            JsonNode jsonMergePatch = JsonLoader.fromURL(url);
+            JsonNode jsonMergePatch = getJsonNodeFromUrl(trustSelfSignedCerts, url);
             JsonMergePatch patch = JsonMergePatch.fromJson(jsonMergePatch);
             return patch;
-        } catch (IOException | JsonPatchException e) {
+        } catch (JsonPatchException e) {
             throw new RuntimeException(e);
         }
     }
 
 
+    /**
+     * Reads the json of the extension for extending the release schema. This will be applied to release schemas
+     * @param extensionName
+     * @return
+     */
     private JsonMergePatch readExtensionReleaseJson(String extensionName) {
         //reading meta
         try {
@@ -284,6 +332,16 @@ public class OcdsValidatorService {
         }
     }
 
+
+    /**
+     * Gets the schema with extensions, reads from cache this was invoked previosuly.
+     * The schemas are cached based on a key {@link OcdsValidatorRequest#getKey()}. This is calculated based on
+     * schema type, versions, extensions and verbosity. If not found, the schema is loaded from the disk for the given
+     * versions, extensions are all applied, then the schema is cached for further usage and returned.
+     *
+     * @param request the request
+     * @return the schema
+     */
     private JsonSchema getSchema(OcdsValidatorRequest request) {
         if (keySchema.containsKey(request.getKey())) {
             logger.debug("Returning cached schema with extensions " + request.getKey());
@@ -309,6 +367,9 @@ public class OcdsValidatorService {
 
     }
 
+    /**
+     * Initializing prefixes for all available schemas
+     */
     private void initSchemaNamePrefix() {
         logger.debug("Initializing prefixes for all available schemas");
         schemaNamePrefix.put(OcdsValidatorConstants.Schemas.RELEASE, OcdsValidatorConstants.SchemaPrefixes.RELEASE);
@@ -320,8 +381,16 @@ public class OcdsValidatorService {
                 OcdsValidatorConstants.Schemas.RELEASE_PACKAGE,
                 OcdsValidatorConstants.SchemaPrefixes.RELEASE_PACKAGE
         );
+        schemaNamePrefix.put(
+                OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION,
+                OcdsValidatorConstants.SchemaPrefixes.VERSIONED_RELEASE_VALIDATION
+        );
     }
 
+    /**
+     * Initializes predefined schema extensions, all extensions defined in
+     * {@link OcdsValidatorConstants#EXTENSIONS} are used
+     */
     private void initExtensions() {
         logger.debug("Initializing predefined schema extensions");
         OcdsValidatorConstants.EXTENSIONS.forEach(e -> {
@@ -331,6 +400,35 @@ public class OcdsValidatorService {
         });
     }
 
+    /**
+     * Preloads all closed and open codelists. The open codelists are used to report warnings when new entries are found
+     * This is to prevent typos.
+     */
+    private void initCodelists() {
+        logger.debug("Preload codelists");
+        PathMatchingResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
+        try {
+            Resource[] resources = resourcePatternResolver.getResources("/schema/codelists/*.csv");
+            for (Resource resource : resources) {
+                CSVParser parser = new CSVParser(new InputStreamReader(resource.getInputStream()),
+                        CSVFormat.DEFAULT.withHeader());
+                Integer codeIdx = parser.getHeaderMap().get("Code");
+                codeLists.put(resource.getFilename(),
+                        parser.getRecords().stream().map(r -> r.get(codeIdx)).collect(Collectors.toSet()));
+                parser.close();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * This will read the latest available bugfix version for each majorMinor version of the standard.
+     * It is useful when the version specified in the version property is not full semver (1.1.3) but only the
+     * majorMinor versions (1.1), case in which the system will pick the latest bugfixiong version available
+     */
     private void initMajorLatestFullVersion() {
 
         for (int i = 0; i < OcdsValidatorConstants.Versions.ALL.length; i++) {
@@ -353,9 +451,42 @@ public class OcdsValidatorService {
         initSchemaNamePrefix();
         initMajorLatestFullVersion();
         initExtensions();
+        initCodelists();
         initJsonSchemaFactory();
     }
 
+    /**
+     * Sets up and builds a new Apache Http client that can also fetch HTTPS urls
+     * @param trustSelfSignedCerts true if we can trust self signed certs
+     * @return the http client to use
+     */
+    private CloseableHttpClient getHttpClient(boolean trustSelfSignedCerts) {
+        if (trustSelfSignedCerts) {
+            // use the TrustSelfSignedStrategy to allow Self Signed Certificates
+            SSLContext sslContext = null;
+            try {
+                sslContext = SSLContextBuilder
+                        .create()
+                        .loadTrustMaterial(new TrustSelfSignedStrategy())
+                        .build();
+            } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+                e.printStackTrace();
+            }
+            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
+            SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
+            return HttpClients.custom().setSSLSocketFactory(connectionFactory).build();
+        } else {
+            return HttpClients.createDefault();
+        }
+    }
+
+    /**
+     * Creates 'deprecated' metaschema keyword used by schema metaschema.
+     * This keyword is used to defined deprecated fields that will be removed in later releases of OCDS
+     * @see DeprecatedValidator
+     *
+     * @return
+     */
     private Keyword createDeprecatedKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.DEPRECATED)
                 .withSyntaxChecker(DeprecatedSyntaxChecker.getInstance())
@@ -364,25 +495,40 @@ public class OcdsValidatorService {
                 .freeze();
     }
 
+    /**
+     * Creates 'mergeStrategy' keyword. This is currently unused by jOCDS.
+     * @return
+     */
     private Keyword createMergeStrategyKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.MERGE_STRATEGY)
                 .withSyntaxChecker(MergeStrategySyntaxChecker.getInstance())
                 .freeze();
     }
 
+    /**
+     * Creates 'wholeListMerge' keyword. This is currently unused by jOCDS.
+     * @return
+     */
     private Keyword createWholeListMergeKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.WHOLE_LIST_MERGE)
                 .withSyntaxChecker(WholeListMergeSyntaxChecker.getInstance())
                 .freeze();
     }
 
+    /**
+     * Creates 'omitWhenMerged' keyword. This is currently unused by jOCDS.
+     * @return
+     */
     private Keyword createOmitWhenMergedKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OMIT_WHEN_MERGED)
                 .withSyntaxChecker(OmitWhenMergedSyntaxChecker.getInstance())
                 .freeze();
     }
 
-
+    /**
+     * Creates 'versionId' keyword. This is currently unused by jOCDS.
+     * @return
+     */
     private Keyword createVersionIdKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.VERSION_ID)
                 .withSyntaxChecker(VersionIdSyntaxChecker.getInstance())
@@ -390,15 +536,31 @@ public class OcdsValidatorService {
     }
 
 
+    /**
+     * Creates 'openCodelist' keyword. This defines if the codelist.
+     * http://standard.open-contracting.org/latest/en/schema/codelists/
+     *
+     * @return
+     */
     private Keyword openCodelistKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.OPEN_CODE_LIST)
                 .withSyntaxChecker(OpenCodelistSyntaxChecker.getInstance())
                 .freeze();
     }
 
+    /**
+     * Creates 'codelist' keyword. This defines the csv file that holds the codelists defined by the standard.
+     * @see #initCodelists()
+     * @return
+     */
     private Keyword codelistKeyword() {
         return Keyword.newBuilder(OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST)
                 .withSyntaxChecker(CodelistSyntaxChecker.getInstance())
+                .withIdentityDigester(NodeType.ARRAY, NodeType.OBJECT)
+                .withValidatorFactory(
+                        new ReflectionKeywordValidationFactoryWithService(
+                                OcdsValidatorConstants.CustomSchemaKeywords.CODE_LIST,
+                                CodelistValidator.class, this))
                 .freeze();
     }
 
@@ -441,8 +603,13 @@ public class OcdsValidatorService {
                 + "or codelists. Before a field or codelist value is removed, "
                 + "it will be first marked as deprecated in a major or minor release (e.g. in 1.1), and removal will "
                 + "only take place, subject to the governance process, in the next major version (e.g. 2.0).";
+
+        final String codeListKey = "warn.jocds.codelistValidator";
+        final String codeListValue = "Open codelist has values that are not defined within the standard. Make sure you"
+                + "define and document their rationale!";
+
         final MessageSource source = MapMessageSource.newBuilder()
-                .put(key, value).build();
+                .put(key, value).put(codeListKey, codeListValue).build();
         final MessageBundle bundle
                 = MessageBundles.getBundle(JsonSchemaValidationBundle.class)
                 .thaw().appendSource(source).freeze();
@@ -450,29 +617,107 @@ public class OcdsValidatorService {
     }
 
     public ProcessingReport validate(OcdsValidatorStringRequest request) {
-        return validate(convertStringRequestToNodeRequest(request));
+        try {
+            return validate(convertStringRequestToNodeRequest(request));
+        } catch (RuntimeException e) {
+            return logErrorAsReport(request, e);
+        }
     }
 
+    /**
+     * Prints request data when errors are detected, so we can more easily track errors in sub-schemas,
+     * like when validating records
+     *
+     * @param report the main {@link ProcessingReport}
+     * @param request the request
+     * @return
+     */
+    private ProcessingReport wrapLogReportInRequestInfo(ProcessingReport report, OcdsValidatorRequest request) {
+        try {
+            if (!report.isSuccess()) {
+                report.error(new ProcessingMessage().setMessage("Error(s) found while processing request "
+                        + jacksonObjectMapper.writerWithView(Views.Internal.class).writeValueAsString(request)));
+            }
+        } catch (ProcessingException | JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+        return report;
+    }
+
+    /**
+     * Creates a processing report for the given exception and reports the error inside the report
+     * @param request the request
+     * @param e the exception to be reported
+     * @return the report
+     */
+    private ProcessingReport logErrorAsReport(OcdsValidatorRequest request, Exception e) {
+        ProcessingReport report = new ListProcessingReport();
+        try {
+            wrapLogReportInRequestInfo(report, request);
+            report.error(new ProcessingMessage().setMessage(e.getMessage()));
+            return report;
+        } catch (ProcessingException e1) {
+            e1.printStackTrace();
+            throw new RuntimeException(e1);
+        }
+    }
+
+    /**
+     * Validates a request that contains the data from an URL ({@link OcdsValidatorNodeRequest}).
+     * This will convert the url request to a {@link OcdsValidatorNodeRequest} and then invoke
+     * {@link OcdsValidatorService#validate(OcdsValidatorNodeRequest)}
+     * @param request the request
+     * @return the report
+     */
     public ProcessingReport validate(OcdsValidatorUrlRequest request) {
-        return validate(convertUrlRequestToNodeRequest(request));
+        try {
+            return validate(convertUrlRequestToNodeRequest(request));
+        } catch (RuntimeException e) {
+            return logErrorAsReport(request, e);
+        }
     }
 
+    /**
+     * Validates a request with data coming inline (a pasted release/record-package/release-package).
+     * This is the main entry method where all the other methods of input will defer.
+     * @param nodeRequest the request
+     * @return the report
+     */
     public ProcessingReport validate(OcdsValidatorNodeRequest nodeRequest) {
         if (nodeRequest.getOperation().equals(OcdsValidatorConstants.Operations.VALIDATE)) {
             logger.debug("Running validation for api request for schema of type " + nodeRequest.getSchemaType()
                     + " and version " + nodeRequest.getVersion());
 
-            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE)) {
+            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE)
+                    || nodeRequest.getSchemaType().equals(
+                    OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION)) {
 
                 if (nodeRequest.getVersion() == null) {
                     throw new RuntimeException("Not allowed null version info for release validation!");
                 }
 
-                return validateRelease(nodeRequest);
+                try {
+                    return wrapLogReportInRequestInfo(validateRelease(nodeRequest), nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
+            }
+
+            if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RECORD_PACKAGE)) {
+                try {
+                    return wrapLogReportInRequestInfo(validateRecordPackage(nodeRequest), nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
             }
 
             if (nodeRequest.getSchemaType().equals(OcdsValidatorConstants.Schemas.RELEASE_PACKAGE)) {
-                return validateReleasePackage(nodeRequest);
+                try {
+                    return wrapLogReportInRequestInfo(validateReleasePackage(nodeRequest), nodeRequest);
+                } catch (RuntimeException e) {
+                    return logErrorAsReport(nodeRequest, e);
+                }
             }
         }
 
@@ -509,6 +754,11 @@ public class OcdsValidatorService {
 
     }
 
+    /**
+     * Loads a {@link JsonNode} from an input string and returns it
+     * @param json the json in string format
+     * @return the {@link JsonNode}
+     */
     private JsonNode getJsonNodeFromString(String json) {
         try {
             return JsonLoader.fromString(json);
@@ -518,21 +768,30 @@ public class OcdsValidatorService {
         }
     }
 
-    private JsonNode getJsonNodeFromUrl(String url) {
+    /**
+     * Attempts to fetch the data from the given URL, and will return it in {@link JsonNode} format.
+     * This uses Apache HttpClient to fetch data.
+     * @param trustSelfSignedCerts if to trust self signed certificates for SSL/HTTPS connections.
+     * @param url the url
+     * @return the parsed {@link JsonNode}
+     */
+    private JsonNode getJsonNodeFromUrl(boolean trustSelfSignedCerts, String url) {
         try {
-            return JsonLoader.fromURL(new URL(url));
+            HttpGet request = new HttpGet(url);
+            request.addHeader("accept", "application/json");
+            HttpResponse response = getHttpClient(trustSelfSignedCerts).execute(request);
+            return JsonLoader.fromReader(new InputStreamReader(response.getEntity().getContent()));
         } catch (IOException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
 
 
     /**
-     * Validates a release or an array of releases
+     * Internal method. Validates a release or an array of releases
      *
      * @param nodeRequest
-     * @return
+     * @return the processing report
      */
     private ProcessingReport validateRelease(OcdsValidatorNodeRequest nodeRequest) {
         JsonSchema schema = getSchema(nodeRequest);
@@ -544,18 +803,92 @@ public class OcdsValidatorService {
         }
     }
 
+    /**
+     * Creates full version from majorMinor and bugfix
+     * @param majorMinor first two parts of semver
+     * @param bugfix last part of semver
+     * @return
+     */
     private String constructFullVersion(String majorMinor, Integer bugfix) {
         return majorMinor + "." + bugfix;
     }
 
+
     /**
-     * Validates a release package
+     * Validates all releases given within the array releasesNode, and merges result into the same
+     * {@link ProcessingReport}
+     * @param nodeRequest the request
+     * @param releasesNode the releases array node
+     * @param releaseType the release type (can be releases or versioned-releases - used by records)
+     * @return
+     * @throws ProcessingException
+     */
+    private ProcessingReport validateEmbeddedReleases(OcdsValidatorNodeRequest nodeRequest, JsonNode releasesNode,
+                                                      String releaseType)
+            throws ProcessingException {
+        ProcessingReport returnedReport = new ListProcessingReport();
+        for (JsonNode release : releasesNode) {
+            returnedReport.mergeWith(validateEmbeddedRelease(nodeRequest,
+                    release, releaseType
+            ));
+        }
+        return returnedReport;
+    }
+
+    /**
+     * Valides one embedded release
+     * @param nodeRequest the request
+     * @param node the release node
+     * @param releaseType the release type (can be releases or versioned-releases - used by records)
+     * @return
+     * @throws ProcessingException
+     */
+    private ProcessingReport validateEmbeddedRelease(OcdsValidatorNodeRequest nodeRequest, JsonNode node,
+                                                     String releaseType)
+            throws ProcessingException {
+        ProcessingReport returnedReport = new ListProcessingReport();
+        OcdsValidatorNodeRequest releaseValidationRequest = new OcdsValidatorNodeRequest(nodeRequest, node);
+        releaseValidationRequest.setSchemaType(releaseType);
+        ProcessingReport report = validateRelease(releaseValidationRequest);
+        if (!report.isSuccess()) {
+            ProcessingMessage msg = new ProcessingMessage();
+            msg.setLogLevel(LogLevel.ERROR);
+            String ocid = getOcidFromRelease(node);
+            msg.setMessage("Error(s) in release with ocid=" + ((ocid == null) ? "" : " with ocid " + ocid));
+            ProcessingReport wrapperReport = new ListProcessingReport();
+            wrapperReport.error(msg);
+            wrapperReport.mergeWith(report);
+            returnedReport.mergeWith(wrapperReport);
+            return returnedReport;
+        }
+        return returnedReport;
+    }
+
+
+    /**
+     * Applies extensions read from nodeRequest
      *
      * @param nodeRequest
-     * @return
      */
-    private ProcessingReport validateReleasePackage(OcdsValidatorNodeRequest nodeRequest) {
+    private void applyExtensions(OcdsValidatorNodeRequest nodeRequest) {
+        //get release package extensions
+        if (nodeRequest.getExtensions() == null && nodeRequest.getNode()
+                .hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+            nodeRequest.setExtensions(new TreeSet<>());
+            for (JsonNode extension : nodeRequest.getNode().get(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
+                nodeRequest.getExtensions().add(extension.asText());
+            }
+        }
+    }
 
+    /**
+     * Autodetect version from package. This will attempt to read the version from the package version property and
+     * will use this unless the version is forcefully provided with -version request parameter. This will
+     * modify {@link OcdsValidatorNodeRequest#version} accordingly
+     *
+     * @param nodeRequest
+     */
+    private void autodetectPackageVersion(OcdsValidatorNodeRequest nodeRequest) {
         if (nodeRequest.getVersion() == null) {
             //try autodetect using version in node
             if (nodeRequest.getNode() != null
@@ -569,6 +902,17 @@ public class OcdsValidatorService {
                 throw new RuntimeException("Version schema property has to be present!");
             }
         }
+    }
+
+    /**
+     * Validates a release package
+     *
+     * @param nodeRequest
+     * @return
+     */
+    private ProcessingReport validateReleasePackage(OcdsValidatorNodeRequest nodeRequest) {
+
+        autodetectPackageVersion(nodeRequest);
 
         JsonSchema schema = getSchema(nodeRequest);
         try {
@@ -577,37 +921,14 @@ public class OcdsValidatorService {
                 return releasePackageReport;
             }
 
-            //get release package extensions
-            if (nodeRequest.getExtensions() == null && nodeRequest.getNode()
-                    .hasNonNull(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
-                nodeRequest.setExtensions(new TreeSet<>());
-                for (JsonNode extension : nodeRequest.getNode().get(OcdsValidatorConstants.EXTENSIONS_PROPERTY)) {
-                    nodeRequest.getExtensions().add(extension.asText());
-                }
-            }
+            applyExtensions(nodeRequest);
 
             if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                int i = 0;
-                for (JsonNode release : nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY)) {
-                    OcdsValidatorNodeRequest releaseValidationRequest
-                            = new OcdsValidatorNodeRequest(nodeRequest, release);
-                    releaseValidationRequest.setSchemaType(OcdsValidatorConstants.Schemas.RELEASE);
-                    ProcessingReport report = validateRelease(releaseValidationRequest);
-                    if (!report.isSuccess()) {
-                        ProcessingMessage message = new ProcessingMessage();
-                        message.setLogLevel(LogLevel.ERROR);
-                        String ocid = getOcidFromRelease(release);
-                        message.setMessage("Error(s) in release #" + i++
-                                + new String((ocid == null) ? "" : " with ocid " + ocid));
-
-                        ProcessingReport wrapperReport = new ListProcessingReport();
-                        wrapperReport.error(message);
-                        wrapperReport.mergeWith(report);
-                        releasePackageReport.mergeWith(wrapperReport);
-                    } else {
-                        releasePackageReport.mergeWith(report);
-                    }
-                }
+                releasePackageReport.mergeWith(validateEmbeddedReleases(
+                        nodeRequest,
+                        nodeRequest.getNode().get(OcdsValidatorConstants.RELEASES_PROPERTY),
+                        OcdsValidatorConstants.Schemas.RELEASE
+                ));
             } else {
                 throw new RuntimeException("No releases were found during release package validation!");
             }
@@ -620,6 +941,92 @@ public class OcdsValidatorService {
         }
     }
 
+    /**
+     * Validates a record package and all underlying objects, including releases, versioned-releases,
+     * compiled releases, etc...
+     *
+     * @param nodeRequest
+     * @return
+     */
+    private ProcessingReport validateRecordPackage(OcdsValidatorNodeRequest nodeRequest) {
+
+        autodetectPackageVersion(nodeRequest);
+
+        JsonSchema schema = getSchema(nodeRequest);
+        try {
+
+            //do a general non extension validation of entire json
+            ProcessingReport recordPackageReport = schema.validate(nodeRequest.getNode());
+            if (!recordPackageReport.isSuccess()) {
+                return recordPackageReport;
+            }
+
+            //validate each release separately, after applying extensions
+            applyExtensions(nodeRequest);
+
+            //get all records
+            if (nodeRequest.getNode().hasNonNull(OcdsValidatorConstants.RECORDS_PROPERTY)) {
+                for (JsonNode record : nodeRequest.getNode().get(OcdsValidatorConstants.RECORDS_PROPERTY)) {
+
+                    //validate compiled release
+                    if (record.hasNonNull(OcdsValidatorConstants.COMPILED_RELEASE_PROPERTY)) {
+                        recordPackageReport.mergeWith(validateEmbeddedRelease(
+                                nodeRequest,
+                                record.get(OcdsValidatorConstants.COMPILED_RELEASE_PROPERTY),
+                                OcdsValidatorConstants.Schemas.RELEASE
+                        ));
+                    }
+
+                    //validate versioned release
+                    if (record.hasNonNull(OcdsValidatorConstants.VERSIONED_RELEASE_PROPERTY)) {
+                        recordPackageReport.mergeWith(validateEmbeddedRelease(
+                                nodeRequest,
+                                record.get(OcdsValidatorConstants.VERSIONED_RELEASE_PROPERTY),
+                                OcdsValidatorConstants.Schemas.VERSIONED_RELEASE_VALIDATION
+                        ));
+                    }
+
+                    //validate releases array, this contains 'oneOf' keyword, so we need to distinguish b/w the schemas
+                    if (record.hasNonNull(OcdsValidatorConstants.RELEASES_PROPERTY)) {
+                        //decide if we are. If the first node contains the required 'url' property, this is a
+                        //Linked release case, if not it is an embedded release case
+                        boolean linkUrl = record.get(OcdsValidatorConstants.RELEASES_PROPERTY).get(0)
+                                .hasNonNull(OcdsValidatorConstants.URL_PROPERTY);
+                        if (linkUrl) {
+                            for (JsonNode r : record.get(OcdsValidatorConstants.RELEASES_PROPERTY)) {
+                                //we treat the url as a release link and invoke the validator on that url
+                                OcdsValidatorUrlRequest urlRequest = new OcdsValidatorUrlRequest(
+                                        nodeRequest,
+                                        r.get(OcdsValidatorConstants.URL_PROPERTY).asText()
+                                );
+                                urlRequest.setSchemaType(OcdsValidatorConstants.Schemas.RELEASE);
+                                recordPackageReport.mergeWith(validate(urlRequest));
+                            }
+                        } else {
+                            //we treat each entry as an embedded release
+                            recordPackageReport.mergeWith(validateEmbeddedReleases(
+                                    nodeRequest, record.get(OcdsValidatorConstants.RELEASES_PROPERTY),
+                                    OcdsValidatorConstants.Schemas.RELEASE
+                            ));
+                        }
+                    }
+
+                }
+            }
+
+            return recordPackageReport;
+
+        } catch (ProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Resolves the OCID from the release object
+     * @param release the node with the release object
+     * @return
+     */
     private String getOcidFromRelease(JsonNode release) {
         if (release.hasNonNull(OcdsValidatorConstants.OCID_PROPERTY)) {
             return release.get(OcdsValidatorConstants.OCID_PROPERTY).asText();
@@ -627,6 +1034,13 @@ public class OcdsValidatorService {
         return null;
     }
 
+    /**
+     * This will convert a string request to internal node request by parsing the json and populating the node
+     * property of the {@link OcdsValidatorNodeRequest}
+     *
+     * @param request
+     * @return
+     */
     private OcdsValidatorNodeRequest convertStringRequestToNodeRequest(OcdsValidatorStringRequest request) {
         JsonNode node = null;
         if (!StringUtils.isEmpty(request.getJson())) {
@@ -636,10 +1050,16 @@ public class OcdsValidatorService {
         return new OcdsValidatorNodeRequest(request, node);
     }
 
+    /**
+     * Fetches URL data and parses it into {@link OcdsValidatorNodeRequest}
+     *
+     * @param request the request
+     * @return
+     */
     private OcdsValidatorNodeRequest convertUrlRequestToNodeRequest(OcdsValidatorUrlRequest request) {
         JsonNode node = null;
         if (!StringUtils.isEmpty(request.getUrl())) {
-            node = getJsonNodeFromUrl(request.getUrl());
+            node = getJsonNodeFromUrl(request.getTrustSelfSignedCerts(), request.getUrl());
         }
 
         return new OcdsValidatorNodeRequest(request, node);

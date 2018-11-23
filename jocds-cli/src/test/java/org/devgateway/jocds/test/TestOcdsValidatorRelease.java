@@ -1,9 +1,9 @@
 /*
- * Copyright (c) 2017. Development Gateway and contributors. All rights reserved.
+ * Copyright (c) 2018. Development Gateway and contributors. All rights reserved.
  * Licensed under the MIT license. See LICENSE file in the project root for details.
  */
 
-package test;
+package org.devgateway.jocds.test;
 
 import com.github.fge.jsonschema.core.report.ProcessingReport;
 import org.devgateway.jocds.OcdsValidatorConstants;
@@ -84,7 +84,38 @@ public class TestOcdsValidatorRelease {
         }
 
         Assert.assertTrue(processingReport.isSuccess());
+    }
 
+    @Test
+    public void testRecordPackageValidation() {
+
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(null, new TreeSet<>(),
+                OcdsValidatorConstants.Schemas.RECORD_PACKAGE);
+
+        request.setJson(getJsonFromResource("/record-package.json"));
+
+        ProcessingReport processingReport = ocdsValidatorService.validate(request);
+        if (!processingReport.isSuccess()) {
+            System.out.println(processingReport);
+        }
+
+        Assert.assertTrue(processingReport.isSuccess());
+    }
+
+    @Test
+    public void testRecordPackageWithLinksValidation() {
+
+        OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(null, new TreeSet<>(),
+                OcdsValidatorConstants.Schemas.RECORD_PACKAGE);
+
+        request.setJson(getJsonFromResource("/record-package-with-links.json"));
+
+        ProcessingReport processingReport = ocdsValidatorService.validate(request);
+        if (!processingReport.isSuccess()) {
+            System.out.println(processingReport);
+        }
+
+        Assert.assertTrue(processingReport.isSuccess());
     }
 
     @Test

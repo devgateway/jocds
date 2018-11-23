@@ -19,6 +19,9 @@ public final class OcdsValidatorConstants {
 
     }
 
+    /**
+     * Supported ocds versions
+     */
     public static final class Versions {
         public static final String OCDS_1_0_0 = "1.0.0";
         public static final String OCDS_1_0_1 = "1.0.1";
@@ -34,6 +37,9 @@ public final class OcdsValidatorConstants {
 
     }
 
+    /**
+     * Custom schema meta-schema keywords that extend the json schema
+     */
     public static final class CustomSchemaKeywords {
         /**
          * See http://standard.open-contracting.org/latest/en/schema/deprecation/
@@ -47,33 +53,58 @@ public final class OcdsValidatorConstants {
         public static final String CODE_LIST = "codelist";
     }
 
+    /**
+     * Schema types supported by jOCDS.
+     * @see OcdsValidatorRequest#schemaType
+     */
     public static final class Schemas {
         public static final String RELEASE = "release";
         public static final String RELEASE_PACKAGE = "release-package";
         public static final String RECORD_PACKAGE = "record-package";
-        public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE};
+        public static final String VERSIONED_RELEASE_VALIDATION = "versioned-release-validation";
+        public static final String[] ALL = {RELEASE, RELEASE_PACKAGE, RECORD_PACKAGE, VERSIONED_RELEASE_VALIDATION};
     }
 
+    /**
+     * The log levels supported. Default is error, but also a warning level is supported.
+     *
+     * @see OcdsValidatorRequest#verbosity
+     */
     public static final class LogLevel {
         public static final String WARNING = "warning";
         public static final String ERROR = "error";
         public static final String[] ALL = {WARNING, ERROR};
     }
 
+    /**
+     * Prefixes of files containing json schemas, available in /resources/ folder
+     */
     public static final class SchemaPrefixes {
         public static final String RELEASE = "/schema/release/release-schema-";
         public static final String RELEASE_PACKAGE = "/schema/release-package/release-package-schema-";
         public static final String RECORD_PACKAGE = "/schema/record-package/record-package-schema-";
+        public static final String VERSIONED_RELEASE_VALIDATION = "/schema/versioned-release-validation/"
+                + "versioned-release-validation-schema-";
     }
 
     public static final String SCHEMA_POSTFIX = ".json";
 
+    /**
+     * Supported jOCDS operations
+     *
+     * @see OcdsValidatorRequest#operation
+     */
     public static final class Operations {
         public static final String VALIDATE = "validate";
         public static final String SHOW_SUPPORTED_OCDS = "show-supported-ocds";
         public static final String SHOW_BUILTIN_EXTENSIONS = "show-builtin-extensions";
     }
 
+    /**
+     * These are the supported built-in extensions. These are also available offline, meaning that specifying these
+     * extensions will not require to download the schemas. However jOCDS supports any other extensions provided by
+     * URL in the 'extensions' field
+     */
     public static final class Extensions {
         //OFFICIAL
         public static final String OCDS_BID_EXTENSION_V1_1 = "ocds_bid_extension/v1.1";
@@ -107,6 +138,10 @@ public final class OcdsValidatorConstants {
 
     public static final String EXTENSIONS_PROPERTY = "extensions";
     public static final String RELEASES_PROPERTY = "releases";
+    public static final String RECORDS_PROPERTY = "records";
+    public static final String URL_PROPERTY = "url";
+    public static final String COMPILED_RELEASE_PROPERTY = "compiledRelease";
+    public static final String VERSIONED_RELEASE_PROPERTY = "versionedRelease";
     public static final String OCID_PROPERTY = "ocid";
     public static final String VERSION_PROPERTY = "version";
 
@@ -114,7 +149,14 @@ public final class OcdsValidatorConstants {
             Extensions.ALL)));
 
 
+    /**
+     * The file where the metainformation about the extension (supported version of OCDS etc...) is located
+     */
     public static final String EXTENSION_META = "extension.json";
     public static final String EXTENSION_META_COMPAT_PROPERTY = "compatibility";
+
+    /**
+     * The file where the release schema extension parts are kept.
+     */
     public static final String EXTENSION_RELEASE_JSON = "release-schema.json";
 }

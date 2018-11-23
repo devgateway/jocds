@@ -606,7 +606,7 @@ public class OcdsValidatorService {
 
         final String codeListKey = "warn.jocds.codelistValidator";
         final String codeListValue = "Open codelist has values that are not defined within the standard. Make sure you"
-                + "define and document their rationale!";
+                + " define and document their rationale!";
 
         final MessageSource source = MapMessageSource.newBuilder()
                 .put(key, value).put(codeListKey, codeListValue).build();

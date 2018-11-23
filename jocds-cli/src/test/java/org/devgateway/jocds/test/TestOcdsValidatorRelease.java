@@ -108,6 +108,8 @@ public class TestOcdsValidatorRelease {
         OcdsValidatorStringRequest request = new OcdsValidatorStringRequest(null, new TreeSet<>(),
                 OcdsValidatorConstants.Schemas.RECORD_PACKAGE);
 
+        request.setVerbosity(OcdsValidatorConstants.LogLevel.WARNING);
+
         request.setJson(getJsonFromResource("/record-package-with-links.json"));
 
         ProcessingReport processingReport = ocdsValidatorService.validate(request);
@@ -116,6 +118,7 @@ public class TestOcdsValidatorRelease {
         }
 
         Assert.assertTrue(processingReport.isSuccess());
+        System.out.println(processingReport.toString());
     }
 
     @Test

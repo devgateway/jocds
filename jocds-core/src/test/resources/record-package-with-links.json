@@ -529,7 +529,8 @@
           },
           "status": "complete",
           "submissionMethod": [
-            "electronicSubmission"
+            "electronicSubmission",
+            "customCode"
           ],
           "submissionMethodDetails": "Submit through the online portal at http://example.com/submissions/ocds-213czf-000-00001-01/",
           "tenderPeriod": {

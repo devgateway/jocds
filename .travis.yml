@@ -10,4 +10,4 @@ env:
         - JAVA_OPTS="-XX:MaxMetaspaceSize=256m -Xmx4g -Xverify:none -XX:+TieredCompilation -XX:TieredStopAtLevel=1"
 install: mvn install -Dskip.frontend.build=true -DskipTests=true -Dmaven.javadoc.skip=true -B --quiet
 script: mvn test -Dskip.frontend.build=true -B --quiet
-jdk: openjdk8
+jdk: oraclejdk8

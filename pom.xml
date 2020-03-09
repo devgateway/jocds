@@ -132,9 +132,9 @@
                 <version>${maven.surefire.plugin.version}</version>
                 <configuration>
                     <useSystemClassLoader>false</useSystemClassLoader>
+                    <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-
         </plugins>
         <pluginManagement>
             <plugins>

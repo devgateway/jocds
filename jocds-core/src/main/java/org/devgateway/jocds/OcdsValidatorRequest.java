@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 /**
  * The request object that is used throughout the validator. This is the base class for all request subclasses.
- *
+ * <p>
  * Created by mpostelnicu on 7/5/17.
  */
 public class OcdsValidatorRequest {
@@ -58,7 +58,8 @@ public class OcdsValidatorRequest {
         return schemaType + "-" + version + "-" + extensions + "-" + verbosity;
     }
 
-    @Schema(description = "This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
+    @Schema(description =
+            "This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
             + " autodetection. This is helpful to test against another OCDS schema besides the one specified in "
             + "the incoming JSON.")
     /**
@@ -68,18 +69,19 @@ public class OcdsValidatorRequest {
      */
     private String version;
 
-    @Schema(description = "You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are "
+    @Schema(description =
+            "You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are "
             + " supported, in offline mode, as well as any other OCDS extension given by URL")
     /**
-      You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are
-      supported, in offline mode, as well as any other OCDS extension given by URL
+     You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are
+     supported, in offline mode, as well as any other OCDS extension given by URL
      */
     private SortedSet<String> extensions = new TreeSet<>();
 
     @Pattern(regexp = OcdsValidatorConstants.Operations.VALIDATE + "|"
             + OcdsValidatorConstants.Operations.SHOW_BUILTIN_EXTENSIONS + "|"
             + OcdsValidatorConstants.Operations.SHOW_SUPPORTED_OCDS)
-    @Schema(description ="Provides the operation that needs to be performed. The default is 'validate'."
+    @Schema(description = "Provides the operation that needs to be performed. The default is 'validate'."
             + "'show-supported-ocds' will list the supported ocds versions. show-builtin-extensions will list the "
             + "core OCDS extensions that are supported internally and in offline mode.")
     /**
@@ -89,7 +91,7 @@ public class OcdsValidatorRequest {
      */
     private String operation = OcdsValidatorConstants.Operations.VALIDATE;
 
-    @Schema(description ="Trust self signed SSL certificates. Defaults to false")
+    @Schema(description = "Trust self signed SSL certificates. Defaults to false")
     /**
      * Trust self signed SSL certificates. Defaults to false
      */

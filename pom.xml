@@ -13,7 +13,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.devgateway.jocds</groupId>
     <artifactId>jocds</artifactId>
-    <version>0.3.3-SNAPSHOT</version>
+    <version>0.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>jOCDS</name>
     <description>jOCDS - The Java Open Contracting Standard Validator</description>
@@ -48,14 +48,14 @@
         </developerConnection>
         <connection>git@github.com:devgateway/jocds.git
         </connection>
-        <tag>0.1.0-SNAPSHOT</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
         <repository>
-            <id>bintray-devgateway-jocds</id>
-            <name>devgateway-jocds</name>
-            <url>https://api.bintray.com/maven/devgateway/jocds/jocds/;publish=1</url>
+            <id>devgateway-open-source</id>
+            <name>devgateway-open-source</name>
+            <url>https://artifactory.dgdev.org/artifactory/devgateway-open-source/</url>
         </repository>
     </distributionManagement>
 

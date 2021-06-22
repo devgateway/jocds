@@ -16,11 +16,11 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
-        <json.patch.version>1.9</json.patch.version>
-        <json.schema.validator.version>2.2.10</json.schema.validator.version>
+        <java.version>11</java.version>
+        <json.patch.version>1.13</json.patch.version>
+        <json.schema.validator.version>2.2.14</json.schema.validator.version>
         <semver4j.version>2.2.0</semver4j.version>
-        <swagger.annotations.version>1.5.21</swagger.annotations.version>
+        <swagger.annotations.version>2.1.9</swagger.annotations.version>
         <httpclient.version>4.5.6</httpclient.version>
         <commons.csv.version>1.6</commons.csv.version>
     </properties>
@@ -28,7 +28,7 @@
     <parent>
         <groupId>org.devgateway.jocds</groupId>
         <artifactId>jocds</artifactId>
-        <version>0.3.3-SNAPSHOT</version>
+        <version>0.4.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -60,7 +60,7 @@
         </dependency>
 
         <dependency>
-            <groupId>io.swagger</groupId>
+            <groupId>io.swagger.core.v3</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger.annotations.version}</version>
         </dependency>
@@ -72,7 +72,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.fge</groupId>
+            <groupId>com.github.java-json-tools</groupId>
             <artifactId>json-patch</artifactId>
             <version>${json.patch.version}</version>
         </dependency>

@@ -5,7 +5,8 @@
 
 package org.devgateway.jocds;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.SortedSet;
 
 /**
@@ -13,7 +14,7 @@ import java.util.SortedSet;
  */
 public class OcdsValidatorStringRequest extends OcdsValidatorRequest {
 
-    @ApiModelProperty(value = "The json to validate against OCDS schema, given as text.")
+    @Schema(description = "The json to validate against OCDS schema, given as text.")
     private String json;
 
 

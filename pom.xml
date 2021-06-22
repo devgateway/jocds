@@ -13,15 +13,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.devgateway.jocds</groupId>
     <artifactId>jocds</artifactId>
-    <version>0.3.3-SNAPSHOT</version>
+    <version>0.4.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>jOCDS</name>
     <description>jOCDS - The Java Open Contracting Standard Validator</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
-        <spring.boot.version>2.1.13.RELEASE</spring.boot.version>
+        <java.version>11</java.version>
+        <spring.boot.version>2.4.7</spring.boot.version>
         <maven.compiler.plugin.version>3.8.0</maven.compiler.plugin.version>
         <maven.release.plugin.version>2.5.3</maven.release.plugin.version>
         <maven.checkstyle.plugin.version>2.17</maven.checkstyle.plugin.version>
@@ -48,14 +48,14 @@
         </developerConnection>
         <connection>git@github.com:devgateway/jocds.git
         </connection>
-        <tag>0.1.0-SNAPSHOT</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
         <repository>
-            <id>bintray-devgateway-jocds</id>
-            <name>devgateway-jocds</name>
-            <url>https://api.bintray.com/maven/devgateway/jocds/jocds/;publish=1</url>
+            <id>devgateway-open-source</id>
+            <name>devgateway-open-source</name>
+            <url>https://artifactory.dgdev.org/artifactory/devgateway-open-source/</url>
         </repository>
     </distributionManagement>
 
@@ -76,23 +76,6 @@
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>${maven.javadoc.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <additionalparam>-Xdoclint:none</additionalparam>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>

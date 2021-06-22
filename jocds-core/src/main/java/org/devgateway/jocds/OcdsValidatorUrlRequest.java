@@ -5,7 +5,7 @@
 
 package org.devgateway.jocds;
 
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.hibernate.validator.constraints.URL;
 
 import javax.validation.constraints.NotEmpty;
@@ -17,7 +17,7 @@ public class OcdsValidatorUrlRequest extends OcdsValidatorRequest {
 
     @NotEmpty(message = "Please provide an URL!")
     @URL
-    @ApiModelProperty(value = "The URL of the OCDS JSON to validate.", required = true)
+    @Schema(description = "The URL of the OCDS JSON to validate.", required = true)
     private String url;
 
     public String getUrl() {

@@ -6,7 +6,7 @@
 package org.devgateway.jocds;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
@@ -53,12 +53,12 @@ public class OcdsValidatorRequest {
      * @return
      */
     @JsonIgnore
-    @ApiModelProperty(hidden = true)
+    @Schema(hidden = true)
     public String getKey() {
         return schemaType + "-" + version + "-" + extensions + "-" + verbosity;
     }
 
-    @ApiModelProperty("This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
+    @Schema(description = "This is the version of OCDS schema to validate against. Leaving this empty will enable schema"
             + " autodetection. This is helpful to test against another OCDS schema besides the one specified in "
             + "the incoming JSON.")
     /**
@@ -68,7 +68,7 @@ public class OcdsValidatorRequest {
      */
     private String version;
 
-    @ApiModelProperty("You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are "
+    @Schema(description = "You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are "
             + " supported, in offline mode, as well as any other OCDS extension given by URL")
     /**
       You can provide a set of OCDS extensions here to validate against. All OCDS core extensions are
@@ -79,7 +79,7 @@ public class OcdsValidatorRequest {
     @Pattern(regexp = OcdsValidatorConstants.Operations.VALIDATE + "|"
             + OcdsValidatorConstants.Operations.SHOW_BUILTIN_EXTENSIONS + "|"
             + OcdsValidatorConstants.Operations.SHOW_SUPPORTED_OCDS)
-    @ApiModelProperty("Provides the operation that needs to be performed. The default is 'validate'."
+    @Schema(description ="Provides the operation that needs to be performed. The default is 'validate'."
             + "'show-supported-ocds' will list the supported ocds versions. show-builtin-extensions will list the "
             + "core OCDS extensions that are supported internally and in offline mode.")
     /**
@@ -89,14 +89,14 @@ public class OcdsValidatorRequest {
      */
     private String operation = OcdsValidatorConstants.Operations.VALIDATE;
 
-    @ApiModelProperty("Trust self signed SSL certificates. Defaults to false")
+    @Schema(description ="Trust self signed SSL certificates. Defaults to false")
     /**
      * Trust self signed SSL certificates. Defaults to false
      */
     private boolean trustSelfSignedCerts = false;
 
     @NotEmpty(message = "Please provide schemaType!")
-    @ApiModelProperty(value = "This is the schema type of the input JSON. Currently supported values are 'release' "
+    @Schema(description = "This is the schema type of the input JSON. Currently supported values are 'release' "
             + ", release-package, record-package", required = true)
     @Pattern(regexp = OcdsValidatorConstants.Schemas.RELEASE + "|"
             + OcdsValidatorConstants.Schemas.RELEASE_PACKAGE + "|" + OcdsValidatorConstants.Schemas.RECORD_PACKAGE)
@@ -106,7 +106,7 @@ public class OcdsValidatorRequest {
      */
     private String schemaType;
 
-    @ApiModelProperty(value = "Set the verbosity level of output. Default is 'error' but you can set this to "
+    @Schema(description = "Set the verbosity level of output. Default is 'error' but you can set this to "
             + "'warning'. On 'warning', the validator will print warning output for elements that are not part of the "
             + "schema or meta-schema, OCDS deprecated fields, etc. On 'error' it will only print validation"
             + " errors.")

@@ -13,7 +13,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.devgateway.jocds</groupId>
     <artifactId>jocds</artifactId>
-    <version>0.4.0-SNAPSHOT</version>
+    <version>0.4.0</version>
     <packaging>pom</packaging>
     <name>jOCDS</name>
     <description>jOCDS - The Java Open Contracting Standard Validator</description>
@@ -48,7 +48,7 @@
         </developerConnection>
         <connection>git@github.com:devgateway/jocds.git
         </connection>
-        <tag>HEAD</tag>
+        <tag>0.4.0</tag>
     </scm>
 
     <distributionManagement>
